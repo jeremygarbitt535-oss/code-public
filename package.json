@@ -1,0 +1,14 @@
+{
+  "name": "venmo-arbitrageur",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "plaid": "^30.1.0",
+    "ws": "^8.18.0"
+  }
+}
