@@ -29,21 +29,9 @@
     h1 { margin: 0; font-size: 26px; font-weight: 650; }
     .sub { color: #94a3b8; margin: 0 0 20px; font-size: 15px; }
     .avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #3d95ce;
-      color: white;
-      font-weight: 700;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      flex-shrink: 0;
-      margin-left: 12px;
-      cursor: pointer;
-      border: 2px solid #60a5fa;
+      width: 44px; height: 44px; border-radius: 50%; background: #3d95ce; color: white;
+      font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center;
+      text-decoration: none; flex-shrink: 0; margin-left: 12px; cursor: pointer; border: 2px solid #60a5fa;
     }
     .avatar:hover { background: #2e7bb0; }
     .card { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 1px solid #334155; }
@@ -64,21 +52,17 @@
     button.cashapp:hover, a.cashapp:hover { background: #00b82b; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     a.ext-link {
-      color: #1d4ed8;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      font-weight: 500;
-      font-size: 15px;
-      margin: 0 10px 0 0;
-      cursor: pointer;
-      padding: 2px 0;
+      color: #60a5fa; text-decoration: underline; text-underline-offset: 2px;
+      font-weight: 500; font-size: 15px; margin: 0 10px 0 0; cursor: pointer; padding: 2px 0;
     }
-    a.ext-link:hover { color: #1e40af; }
-    a.ext-link:visited { color: #5b21b6; }
+    a.ext-link:hover { color: #93c5fd; }
     .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .opp.high { border-left-color: #f59e0b; }
-    .opp.locked { border-left-color: #64748b; opacity: .75; }
+    .opp.locked { border-left-color: #64748b; opacity: .75; filter: blur(2px); position: relative; }
+    .opp.locked::after {
+      content: ''; position: absolute; inset: 0; background: rgba(15,23,42,.4); border-radius: 10px;
+    }
     .yield { font-size: 18px; font-weight: 650; color: #22c55e; }
     .meta { font-size: 13px; color: #94a3b8; margin-top: 2px; }
     #status { font-size: 13px; color: #64748b; min-height: 18px; }
@@ -91,6 +75,13 @@
     .install-banner { border-color: #3b82f6; }
     .skeleton { height: 72px; background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 10px; margin: 8px 0; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .how { font-size: 14px; color: #cbd5e1; }
+    .how ol { margin: 8px 0 0; padding-left: 20px; }
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; }
+    .compare div { background: #0f172a; border-radius: 10px; padding: 12px; }
+    .compare .paid { border: 1px solid #22c55e; }
+    .compare h3 { margin: 0 0 6px; font-size: 14px; }
+    .compare ul { margin: 0; padding-left: 16px; }
   </style>
 </head>
 <body>
@@ -103,6 +94,43 @@
       <a class="avatar" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer" title="My Venmo Profile">JG</a>
     </div>
 
+    <div class="card how">
+      <strong>How it works</strong>
+      <ol>
+        <li>Tap <strong>Scan</strong> to find current yield opportunities.</li>
+        <li>Filter by minimum dollar amount.</li>
+        <li>Review risk and net yield, then open Venmo or Cash App to act.</li>
+        <li>Free users get limited scans per day. Premium unlocks unlimited scans and alerts.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <strong>Free vs Premium</strong>
+      <div class="compare" style="margin-top:10px;">
+        <div>
+          <h3>Free</h3>
+          <ul>
+            <li>Limited scans / day</li>
+            <li>Basic opportunities</li>
+            <li>No alerts</li>
+          </ul>
+        </div>
+        <div class="paid">
+          <h3>Premium</h3>
+          <ul>
+            <li>Unlimited scans</li>
+            <li>Higher-yield windows</li>
+            <li>Daily alerts (Telegram / Discord)</li>
+            <li>$19 one-time or $49 lifetime</li>
+          </ul>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <a class="btn premium" href="/premium.html">$19 One-time</a>
+        <a class="btn premium" href="/premium.html?plan=lifetime">$49 Lifetime</a>
+      </div>
+    </div>
+
     <div class="install-banner" id="installBanner" style="display:none;">
       <strong>Install the app</strong><br>
       <span id="installHint" style="color:#94a3b8;font-size:14px;">Add to your home screen for one-tap access.</span><br>
@@ -112,7 +140,8 @@
     <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
       <strong>Free scans used for today.</strong><br>
       <span id="bannerCountdown" style="color:#94a3b8;font-size:14px;"></span><br>
-      <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock Unlimited — $19</a>
+      <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock — $19</a>
+      <a class="btn premium" href="/premium.html?plan=lifetime" style="margin-top:10px;margin-left:6px;">Lifetime $49</a>
     </div>
 
     <div class="card">
@@ -210,8 +239,8 @@
       installBanner.style.display = 'none';
     }
 
-    const saved = localStorage.getItem('yieldThreshold');
-    if (saved) thresholdEl.value = saved;
+    const savedThreshold = localStorage.getItem('yieldThreshold');
+    if (savedThreshold) thresholdEl.value = savedThreshold;
     thresholdEl.onchange = () => localStorage.setItem('yieldThreshold', thresholdEl.value);
 
     function hoursUntilReset() {
@@ -255,14 +284,15 @@
     function renderOpp(opp, locked = false) {
       const div = document.createElement('div');
       div.className = 'opp' + (opp.riskLevel === 'High' ? ' high' : '') + (locked ? ' locked' : '');
+      const blurStyle = locked ? 'filter:blur(3px);' : '';
       div.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;${blurStyle}">
           <strong>${opp.name || opp.id}</strong>
           <span class="yield">+$${Number(opp.net).toFixed(2)}</span>
         </div>
-        <div class="meta">${opp.method || ''} · ${opp.riskLevel || ''} risk</div>
-        <div style="margin-top:6px;font-size:14px;color:#cbd5e1;">${opp.description || ''}</div>
-        ${locked ? '<div style="margin-top:8px;"><a href="/premium.html" style="color:#22c55e;font-size:13px;">Unlock to view</a></div>' : `
+        <div class="meta" style="${blurStyle}">${opp.method || ''} · ${opp.riskLevel || ''} risk</div>
+        <div style="margin-top:6px;font-size:14px;color:#cbd5e1;${blurStyle}">${opp.description || ''}</div>
+        ${locked ? '<div style="margin-top:8px;position:relative;z-index:1;"><a href="/premium.html" style="color:#22c55e;font-size:13px;">Unlock to view full details</a></div>' : `
           <div style="margin-top:8px;">
             <button style="padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Simulate</button>
             <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer">My Profile</a>
@@ -275,6 +305,24 @@
     function showSkeleton() {
       resultsEl.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
     }
+
+    function saveResults(list) {
+      try { localStorage.setItem('lastResults', JSON.stringify(list)); } catch (_) {}
+    }
+    function loadSavedResults() {
+      try {
+        const raw = localStorage.getItem('lastResults');
+        if (!raw) return;
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.length) {
+          resultsEl.innerHTML = '';
+          list.forEach(o => renderOpp(o));
+          lastResults = list;
+          statusEl.textContent = `Last scan restored · ${list.length} found`;
+        }
+      } catch (_) {}
+    }
+    loadSavedResults();
 
     async function scan() {
       scanBtn.disabled = true;
@@ -295,12 +343,13 @@
           upgradeBanner.style.display = 'block';
           scansEl.textContent = 'Free scans left: 0';
           resultsEl.innerHTML = `<div class="card">${data.message || 'Free limit reached.'} <a href="/premium.html" style="color:#22c55e;">Unlock</a></div>`;
-          renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+          renderOpp({ id: 'locked', name: 'Higher Yield Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'This opportunity is visible with Premium. Unlock to see full details and act on it.' }, true);
           return;
         }
         if (data.yields) {
           const filtered = data.yields.filter(o => o.net >= min);
           lastResults = filtered;
+          saveResults(filtered);
           if (!filtered.length) {
             resultsEl.innerHTML = '<div class="card">No opportunities above your minimum.</div>';
           } else {
