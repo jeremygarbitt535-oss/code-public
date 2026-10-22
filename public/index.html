@@ -42,10 +42,14 @@
     a.ext-link {
       color: #60a5fa;
       text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 500;
       font-size: 14px;
-      margin-left: 4px;
+      margin: 0 6px;
+      cursor: pointer;
     }
-    a.ext-link:hover { color: #93c5fd; }
+    a.ext-link:hover { color: #93c5fd; text-decoration: underline; }
+    a.ext-link::after { content: " \2197"; font-size: 11px; opacity: .7; }
     .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .opp.high { border-left-color: #f59e0b; }
@@ -94,12 +98,10 @@
         <button class="secondary" id="installBtn">Install App</button>
         <a class="btn premium" href="/premium.html">Premium</a>
       </div>
-      <div style="margin-top:10px; font-size:14px;">
-        <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener">My Profile (@Jeremy-Garbitt-1)</a>
-        ·
-        <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener">Venmo QR</a>
-        ·
-        <a class="ext-link" href="https://cash.app" target="_blank" rel="noopener">cash.app</a>
+      <div style="margin-top:12px; font-size:14px;">
+        <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer">My Profile</a>
+        <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer">Venmo QR</a>
+        <a class="ext-link" href="https://cash.app" target="_blank" rel="noopener noreferrer">Cash App</a>
       </div>
       <div class="row" style="margin-top:12px;">
         <label style="font-size:14px;color:#94a3b8;">Min $</label>
@@ -225,8 +227,8 @@
         ${locked ? '<div style="margin-top:8px;"><a href="/premium.html" style="color:#22c55e;font-size:13px;">Unlock to view</a></div>' : `
           <div style="margin-top:8px;">
             <button style="padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Simulate</button>
-            <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener">My Profile</a>
-            <a class="ext-link" href="https://cash.app" target="_blank" rel="noopener">Cash App</a>
+            <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer">My Profile</a>
+            <a class="ext-link" href="https://cash.app" target="_blank" rel="noopener noreferrer">Cash App</a>
           </div>`}
       `;
       resultsEl.prepend(div);
