@@ -19,9 +19,33 @@
       background: #0f172a; color: #e2e8f0;
       line-height: 1.5; -webkit-font-smoothing: antialiased;
     }
-    .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
-    h1 { margin: 0 0 4px; font-size: 26px; font-weight: 650; }
+    .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; position: relative; }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+    }
+    h1 { margin: 0; font-size: 26px; font-weight: 650; }
     .sub { color: #94a3b8; margin: 0 0 20px; font-size: 15px; }
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #3d95ce;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      flex-shrink: 0;
+      margin-left: 12px;
+      cursor: pointer;
+      border: 2px solid #60a5fa;
+    }
+    .avatar:hover { background: #2e7bb0; }
     .card { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 1px solid #334155; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     button, a.btn {
@@ -71,8 +95,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>Venmo Arbitrageur</h1>
-    <p class="sub">Scan opportunities and net yield</p>
+    <div class="header-row">
+      <div>
+        <h1>Venmo Arbitrageur</h1>
+        <p class="sub">Scan opportunities and net yield</p>
+      </div>
+      <a class="avatar" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer" title="My Venmo Profile">JG</a>
+    </div>
 
     <div class="install-banner" id="installBanner" style="display:none;">
       <strong>Install the app</strong><br>
@@ -131,7 +160,6 @@
     let lastResults = [];
     let deferredPrompt = null;
 
-    // Force all external links to open reliably
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href^="http"]');
       if (a) {
