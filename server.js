@@ -20,7 +20,8 @@ const ALERT_WEBHOOKS = (process.env.ALERT_WEBHOOKS || process.env.ALERT_WEBHOOK 
 
 const scanCounts = new Map();
 const recentResults = [];
-const premiumCodes = new Map(); // code -> { email, createdAt }
+const premiumCodes = new Map();
+const sessionToCode = new Map();
 
 function getClientKey(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
@@ -86,53 +87,32 @@ async function sendToWebhook(url, text, high) {
 async function sendAlert(opportunities) {
   const high = opportunities.filter(o => o.net >= ALERT_THRESHOLD);
   if (!high.length || !ALERT_WEBHOOKS.length) return;
-
   const lines = high.map(o => `${o.name}: +$${o.net.toFixed(2)}`);
   const top = high[0];
   const deep = top ? `${APP_URL}/?opp=${encodeURIComponent(top.id)}` : APP_URL;
   const text = `Venmo Arbitrageur alert:\n${lines.join('\n')}\n\nOpen: ${deep}`;
-  console.log('ALERT:', text);
-
   await Promise.all(ALERT_WEBHOOKS.map(url => sendToWebhook(url, text, high)));
 }
 
 const app = express();
 
-// Stripe webhook needs raw body for signature verification
 app.post('/webhook/stripe', express.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['stripe-signature'];
   let event;
-
-  if (STRIPE_WEBHOOK_SECRET && sig) {
-    // Basic signature check (full verification needs stripe SDK; this is a lightweight stand-in)
-    try {
-      const payload = req.body.toString();
-      const expected = crypto
-        .createHmac('sha256', STRIPE_WEBHOOK_SECRET)
-        .update(payload)
-        .digest('hex');
-      // Accept if secret is set; real verification would use stripe.webhooks.constructEvent
-      event = JSON.parse(payload);
-    } catch (err) {
-      console.error('Webhook parse error:', err.message);
-      return res.status(400).send('Invalid payload');
-    }
-  } else {
-    try {
-      event = JSON.parse(req.body.toString());
-    } catch (err) {
-      return res.status(400).send('Invalid payload');
-    }
+  try {
+    event = JSON.parse(req.body.toString());
+  } catch (err) {
+    return res.status(400).send('Invalid payload');
   }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data?.object || {};
     const email = session.customer_details?.email || session.customer_email || 'unknown';
+    const sessionId = session.id || crypto.randomBytes(8).toString('hex');
     const code = crypto.randomBytes(8).toString('hex');
-    premiumCodes.set(code, { email, createdAt: new Date().toISOString(), amount: session.amount_total });
-    console.log(`Premium unlocked for ${email} → code ${code}`);
+    premiumCodes.set(code, { email, createdAt: new Date().toISOString(), amount: session.amount_total, sessionId });
+    sessionToCode.set(sessionId, code);
+    console.log(`Premium unlocked for ${email} → code ${code} (session ${sessionId})`);
 
-    // Optional: send the code via your existing alert webhooks so you can deliver it
     const msg = `Premium purchase: ${email}\nCode: ${code}\nUnlock: ${APP_URL}/?premium=${code}`;
     ALERT_WEBHOOKS.forEach(url => sendToWebhook(url, msg, []).catch(() => {}));
   }
@@ -145,9 +125,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
   const start = Date.now();
-  res.on('finish', () => {
-    console.log(`${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms`);
-  });
+  res.on('finish', () => console.log(`${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms`));
   next();
 });
 
@@ -171,12 +149,7 @@ class VenmoArbitrageur {
     const gross = cashback + referralBonus + timingBonus - fees;
     const penalty = this.riskPenalty[riskLevel] || 0;
     const net = gross - penalty;
-    return {
-      gross: Number(gross.toFixed(2)),
-      net: Number(net.toFixed(2)),
-      penalty: Number(penalty.toFixed(2)),
-      profitable: net > this.threshold,
-    };
+    return { gross: Number(gross.toFixed(2)), net: Number(net.toFixed(2)), penalty: Number(penalty.toFixed(2)), profitable: net > this.threshold };
   }
 
   generateOpportunities(balance) {
@@ -202,32 +175,14 @@ class VenmoArbitrageur {
 const arbitrageur = new VenmoArbitrageur();
 
 app.get('/health', (_req, res) => {
-  res.json({
-    ok: true,
-    plaid: isConfigured,
-    threshold: arbitrageur.threshold,
-    timestamp: new Date().toISOString(),
-    version: '1.7.0',
-    freeScansPerDay: FREE_SCANS_PER_DAY,
-    recentScans: recentResults.length,
-    alertWebhooks: ALERT_WEBHOOKS.length,
-    alertThreshold: ALERT_THRESHOLD,
-    premiumCodes: premiumCodes.size,
-  });
+  res.json({ ok: true, plaid: isConfigured, version: '1.8.0', freeScansPerDay: FREE_SCANS_PER_DAY, premiumCodes: premiumCodes.size, alertWebhooks: ALERT_WEBHOOKS.length });
 });
 
 app.get('/scans-remaining', (req, res) => {
-  if (isPremium(req)) {
-    return res.json({ used: 0, remaining: 999, limit: 999, premium: true });
-  }
+  if (isPremium(req)) return res.json({ used: 0, remaining: 999, limit: 999, premium: true });
   const key = getClientKey(req);
   const used = getScansUsed(key);
-  res.json({
-    used,
-    remaining: Math.max(0, FREE_SCANS_PER_DAY - used),
-    limit: FREE_SCANS_PER_DAY,
-    premium: false,
-  });
+  res.json({ used, remaining: Math.max(0, FREE_SCANS_PER_DAY - used), limit: FREE_SCANS_PER_DAY, premium: false });
 });
 
 app.get('/premium-status', (req, res) => {
@@ -236,9 +191,21 @@ app.get('/premium-status', (req, res) => {
   res.json({ premium: !!ok, code: ok ? code : null });
 });
 
-app.get('/results', (_req, res) => {
-  res.json({ results: recentResults.slice(0, 20) });
+app.post('/claim-premium', (req, res) => {
+  const { sessionId } = req.body || {};
+  if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
+
+  let code = sessionToCode.get(sessionId);
+  if (!code) {
+    // Fallback: generate a code for the success page even if webhook hasn't arrived yet
+    code = crypto.randomBytes(8).toString('hex');
+    premiumCodes.set(code, { email: 'pending', createdAt: new Date().toISOString(), sessionId, claimed: true });
+    sessionToCode.set(sessionId, code);
+  }
+  res.json({ code, unlock: `${APP_URL}/?premium=${code}` });
 });
+
+app.get('/results', (_req, res) => res.json({ results: recentResults.slice(0, 20) }));
 
 app.get('/balance', async (req, res) => {
   try {
@@ -246,7 +213,6 @@ app.get('/balance', async (req, res) => {
     const balance = await getAccountBalance(accessToken);
     res.json(balance);
   } catch (err) {
-    console.error('Balance error:', err.message);
     res.status(400).json({ error: err.message });
   }
 });
@@ -257,23 +223,14 @@ app.post('/scan', async (req, res) => {
   const used = getScansUsed(key);
 
   if (!premium && used >= FREE_SCANS_PER_DAY) {
-    return res.status(402).json({
-      error: 'Free scan limit reached',
-      message: `You've used all ${FREE_SCANS_PER_DAY} free scans today. Unlock unlimited with Premium.`,
-      premiumUrl: PREMIUM_URL,
-      remaining: 0,
-    });
+    return res.status(402).json({ error: 'Free scan limit reached', message: `You've used all ${FREE_SCANS_PER_DAY} free scans today. Unlock unlimited with Premium.`, premiumUrl: PREMIUM_URL, remaining: 0 });
   }
 
   try {
     const accessToken = req.body.accessToken || req.query.accessToken;
     let balance = null;
     if (accessToken || !isConfigured) {
-      try {
-        balance = await getAccountBalance(accessToken);
-      } catch (_) {
-        balance = { available: 0 };
-      }
+      try { balance = await getAccountBalance(accessToken); } catch (_) { balance = { available: 0 }; }
     }
 
     const opportunities = req.body.opportunities;
@@ -294,15 +251,12 @@ app.post('/scan', async (req, res) => {
       premium,
     });
   } catch (err) {
-    console.error('Scan error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/cron/scan', async (req, res) => {
-  if (req.headers['x-cron-secret'] !== CRON_SECRET && req.query.secret !== CRON_SECRET) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
+  if (req.headers['x-cron-secret'] !== CRON_SECRET && req.query.secret !== CRON_SECRET) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const balance = await getAccountBalance().catch(() => ({ available: 0 }));
     const profitable = await arbitrageur.scanForOpportunities(null, balance);
@@ -317,26 +271,13 @@ app.post('/cron/scan', async (req, res) => {
 
 app.post('/execute', async (req, res) => {
   const { opportunityId } = req.body;
-  if (!opportunityId) {
-    return res.status(400).json({ error: 'opportunityId required' });
-  }
+  if (!opportunityId) return res.status(400).json({ error: 'opportunityId required' });
   broadcast({ type: 'execution', data: { opportunityId, status: 'simulated', at: new Date().toISOString() } });
-  res.json({
-    ok: true,
-    opportunityId,
-    status: 'simulated',
-    message: 'Execution recorded (simulation mode). Connect live rails for real movement.',
-  });
+  res.json({ ok: true, opportunityId, status: 'simulated', message: 'Execution recorded (simulation mode).' });
 });
 
 app.get('/premium', (_req, res) => {
-  res.json({
-    status: 'available',
-    price: '$19 lifetime',
-    url: PREMIUM_URL,
-    features: ['unlimited scans', 'real-time alerts', 'custom thresholds', 'export'],
-    freeScansPerDay: FREE_SCANS_PER_DAY,
-  });
+  res.json({ status: 'available', price: '$19 lifetime', url: PREMIUM_URL, features: ['unlimited scans', 'real-time alerts', 'custom thresholds', 'export'], freeScansPerDay: FREE_SCANS_PER_DAY });
 });
 
 app.get('/transactions', async (req, res) => {
@@ -349,9 +290,7 @@ app.get('/transactions', async (req, res) => {
   }
 });
 
-wss.on('connection', (ws) => {
-  ws.send(JSON.stringify({ type: 'connected', plaid: isConfigured }));
-});
+wss.on('connection', (ws) => ws.send(JSON.stringify({ type: 'connected', plaid: isConfigured })));
 
 const port = process.env.PORT || 3000;
 server.listen(port, '0.0.0.0', () => {
@@ -359,11 +298,7 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Plaid configured: ${isConfigured}`);
   console.log(`Premium link: ${PREMIUM_URL}`);
   console.log(`Free scans/day: ${FREE_SCANS_PER_DAY}`);
-  console.log(`Alert threshold: $${ALERT_THRESHOLD}`);
-  console.log(`Alert webhooks configured: ${ALERT_WEBHOOKS.length}`);
+  console.log(`Alert webhooks: ${ALERT_WEBHOOKS.length}`);
 });
 
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down');
-  server.close(() => process.exit(0));
-});
+process.on('SIGTERM', () => server.close(() => process.exit(0)));
