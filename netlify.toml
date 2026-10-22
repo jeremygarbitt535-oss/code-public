@@ -2,6 +2,18 @@
   publish = "public"
 
 [[redirects]]
+  from = "/"
+  to = "https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/"
+  status = 302
+  force = true
+
+[[redirects]]
+  from = "/premium.html"
+  to = "https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/premium.html"
+  status = 302
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/:splat"
   status = 302
