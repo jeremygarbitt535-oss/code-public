@@ -8,8 +8,13 @@ require('dotenv').config();
 const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
 const FREE_SCANS_PER_DAY = 3;
 const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret';
-const ALERT_WEBHOOK = process.env.ALERT_WEBHOOK || '';
 const ALERT_THRESHOLD = Number(process.env.ALERT_THRESHOLD) || 1.0;
+
+// Support single or multiple webhooks (comma-separated)
+const ALERT_WEBHOOKS = (process.env.ALERT_WEBHOOKS || process.env.ALERT_WEBHOOK || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 const scanCounts = new Map();
 const recentResults = [];
@@ -45,32 +50,39 @@ function storeResult(result) {
   if (recentResults.length > 50) recentResults.pop();
 }
 
-async function sendAlert(opportunities) {
-  const high = opportunities.filter(o => o.net >= ALERT_THRESHOLD);
-  if (!high.length || !ALERT_WEBHOOK) return;
-
-  const text = high.map(o => `${o.name}: +$${o.net.toFixed(2)}`).join('\n');
-  const fullText = `Venmo Arbitrageur alert:\n${text}`;
-
-  console.log('ALERT:', fullText);
-
+async function sendToWebhook(url, text, high) {
   try {
-    if (ALERT_WEBHOOK.includes('api.telegram.org')) {
-      // Telegram style: URL already contains token + chat_id or we append text
-      const url = ALERT_WEBHOOK.includes('?')
-        ? `${ALERT_WEBHOOK}&text=${encodeURIComponent(fullText)}`
-        : `${ALERT_WEBHOOK}?text=${encodeURIComponent(fullText)}`;
-      await fetch(url);
-    } else {
-      await fetch(ALERT_WEBHOOK, {
+    if (url.includes('api.telegram.org')) {
+      const full = url.includes('?')
+        ? `${url}&text=${encodeURIComponent(text)}`
+        : `${url}?text=${encodeURIComponent(text)}`;
+      await fetch(full);
+    } else if (url.includes('discord.com/api/webhooks') || url.includes('hooks.slack.com')) {
+      await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: fullText, opportunities: high }),
+        body: JSON.stringify({ content: text, text }),
+      });
+    } else {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, opportunities: high }),
       });
     }
   } catch (e) {
-    console.error('Alert webhook failed:', e.message);
+    console.error(`Webhook failed (${url.slice(0, 40)}...):`, e.message);
   }
+}
+
+async function sendAlert(opportunities) {
+  const high = opportunities.filter(o => o.net >= ALERT_THRESHOLD);
+  if (!high.length || !ALERT_WEBHOOKS.length) return;
+
+  const text = `Venmo Arbitrageur alert:\n${high.map(o => `${o.name}: +$${o.net.toFixed(2)}`).join('\n')}`;
+  console.log('ALERT:', text);
+
+  await Promise.all(ALERT_WEBHOOKS.map(url => sendToWebhook(url, text, high)));
 }
 
 const app = express();
@@ -141,10 +153,10 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
-    version: '1.4.0',
+    version: '1.5.0',
     freeScansPerDay: FREE_SCANS_PER_DAY,
     recentScans: recentResults.length,
-    alertsEnabled: !!ALERT_WEBHOOK,
+    alertWebhooks: ALERT_WEBHOOKS.length,
     alertThreshold: ALERT_THRESHOLD,
   });
 });
@@ -280,7 +292,7 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Premium link: ${PREMIUM_URL}`);
   console.log(`Free scans/day: ${FREE_SCANS_PER_DAY}`);
   console.log(`Alert threshold: $${ALERT_THRESHOLD}`);
-  console.log(`Alerts enabled: ${!!ALERT_WEBHOOK}`);
+  console.log(`Alert webhooks configured: ${ALERT_WEBHOOKS.length}`);
 });
 
 process.on('SIGTERM', () => {
