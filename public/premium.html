@@ -21,7 +21,7 @@
       border-bottom: 1px solid #334155;
     }
     .hero h1 { font-size: 42px; margin: 0 0 12px; }
-    .hero p { font-size: 18px; color: #94a3b8; max-width: 600px; margin: 0 auto 24px; }
+    .hero p { font-size: 18px; color: #94a3b8; max-width: 640px; margin: 0 auto 24px; }
     .cta {
       display: inline-block;
       background: #22c55e;
@@ -76,6 +76,10 @@
     .card h3 { margin: 0 0 8px; }
     .card p { color: #94a3b8; margin: 0; font-size: 14px; }
     .price { font-size: 36px; font-weight: 700; color: #22c55e; }
+    .compare { background: #1e293b; border-radius: 12px; padding: 20px; margin: 40px 0; border: 1px solid #334155; }
+    .compare table { width: 100%; border-collapse: collapse; }
+    .compare th, .compare td { text-align: left; padding: 10px; border-bottom: 1px solid #334155; }
+    .compare th { color: #94a3b8; }
     footer { text-align: center; padding: 40px 20px; color: #64748b; border-top: 1px solid #334155; }
     @media (max-width: 700px) {
       .feature { grid-template-columns: 1fr; }
@@ -85,14 +89,24 @@
 </head>
 <body>
   <div class="hero">
-    <h1>Unlock Premium</h1>
-    <p>Unlimited scans, real-time alerts, custom thresholds, and full export — lifetime access.</p>
-    <div class="price">$19 once</div>
+    <h1>Never miss a high-yield window</h1>
+    <p>Free users get 3 scans a day. Premium removes the limit so you can scan whenever opportunities appear — plus alerts, custom thresholds, and export.</p>
+    <div class="price">$19 once · lifetime</div>
     <br>
-    <a class="cta" id="buy" href="https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00" target="_blank">Get Premium Now</a>
+    <a class="cta" id="buy" href="https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00" target="_blank">Unlock Unlimited Scans</a>
   </div>
 
   <div class="container">
+    <div class="compare">
+      <table>
+        <tr><th></th><th>Free</th><th>Premium</th></tr>
+        <tr><td>Scans per day</td><td>3</td><td>Unlimited</td></tr>
+        <tr><td>Real-time alerts</td><td>—</td><td>Yes</td></tr>
+        <tr><td>Custom yield threshold</td><td>—</td><td>Yes</td></tr>
+        <tr><td>Export results</td><td>—</td><td>CSV</td></tr>
+      </table>
+    </div>
+
     <div class="video-section">
       <h2>See Premium in Action</h2>
       <p style="color:#94a3b8; margin-bottom:20px;">Watch how unlimited scans and alerts work.</p>

@@ -51,6 +51,7 @@
     .yield { font-size: 20px; font-weight: 600; color: #22c55e; }
     .meta { font-size: 13px; color: #94a3b8; }
     #status { font-size: 13px; color: #64748b; }
+    #scans { font-size: 14px; color: #fbbf24; margin-top: 8px; }
     input {
       background: #0f172a;
       border: 1px solid #334155;
@@ -60,6 +61,14 @@
       width: 100%;
       max-width: 400px;
     }
+    .upgrade-banner {
+      background: #1e293b;
+      border: 1px solid #22c55e;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -67,8 +76,14 @@
     <h1>Venmo Arbitrageur</h1>
     <p class="sub">Opportunity scanner and net yield calculator</p>
 
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
+      <strong>You've used all free scans today.</strong><br>
+      <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock Unlimited — $19</a>
+    </div>
+
     <div class="card">
       <div id="status">Connecting...</div>
+      <div id="scans"></div>
       <div style="margin-top: 12px;">
         <button id="scan">Scan Opportunities</button>
         <button class="secondary" id="balance">Check Balance</button>
@@ -84,8 +99,20 @@
 
   <script>
     const statusEl = document.getElementById('status');
+    const scansEl = document.getElementById('scans');
     const resultsEl = document.getElementById('results');
     const tokenEl = document.getElementById('token');
+    const upgradeBanner = document.getElementById('upgradeBanner');
+
+    async function updateScans() {
+      try {
+        const res = await fetch('/scans-remaining');
+        const data = await res.json();
+        scansEl.textContent = `Free scans remaining today: ${data.remaining} / ${data.limit}`;
+        if (data.remaining === 0) upgradeBanner.style.display = 'block';
+      } catch (_) {}
+    }
+    updateScans();
 
     let ws;
     function connect() {
@@ -130,11 +157,21 @@
         body: JSON.stringify({ accessToken: token || undefined }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        upgradeBanner.style.display = 'block';
+        scansEl.textContent = 'Free scans remaining today: 0';
+        resultsEl.innerHTML = `<div class="card">${data.message || 'Free limit reached.'} <a href="/premium.html" style="color:#22c55e;">Unlock Premium</a></div>`;
+        return;
+      }
       if (data.yields) {
         data.yields.forEach(renderOpp);
         if (!data.yields.length) {
           resultsEl.innerHTML = '<div class="card">No opportunities above threshold.</div>';
         }
+      }
+      if (data.scansRemaining !== undefined) {
+        scansEl.textContent = `Free scans remaining today: ${data.scansRemaining}`;
+        if (data.scansRemaining === 0) upgradeBanner.style.display = 'block';
       }
       statusEl.textContent = `Scanned ${data.scanned || 0} · ${data.yields?.length || 0} profitable`;
     }

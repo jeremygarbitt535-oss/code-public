@@ -6,6 +6,36 @@ const { getAccountBalance, getTransactions, isConfigured } = require('./plaidCli
 require('dotenv').config();
 
 const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
+const FREE_SCANS_PER_DAY = 3;
+
+// Simple in-memory daily scan counter by IP (resets on restart)
+const scanCounts = new Map();
+
+function getClientKey(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+}
+
+function getTodayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getScansUsed(key) {
+  const today = getTodayKey();
+  const record = scanCounts.get(key);
+  if (!record || record.date !== today) return 0;
+  return record.count;
+}
+
+function incrementScans(key) {
+  const today = getTodayKey();
+  const record = scanCounts.get(key);
+  if (!record || record.date !== today) {
+    scanCounts.set(key, { date: today, count: 1 });
+    return 1;
+  }
+  record.count += 1;
+  return record.count;
+}
 
 const app = express();
 app.use(express.json());
@@ -155,7 +185,18 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
-    version: '1.1.0',
+    version: '1.2.0',
+    freeScansPerDay: FREE_SCANS_PER_DAY,
+  });
+});
+
+app.get('/scans-remaining', (req, res) => {
+  const key = getClientKey(req);
+  const used = getScansUsed(key);
+  res.json({
+    used,
+    remaining: Math.max(0, FREE_SCANS_PER_DAY - used),
+    limit: FREE_SCANS_PER_DAY,
   });
 });
 
@@ -171,6 +212,17 @@ app.get('/balance', async (req, res) => {
 });
 
 app.post('/scan', async (req, res) => {
+  const key = getClientKey(req);
+  const used = getScansUsed(key);
+  if (used >= FREE_SCANS_PER_DAY) {
+    return res.status(402).json({
+      error: 'Free scan limit reached',
+      message: `You've used all ${FREE_SCANS_PER_DAY} free scans today. Unlock unlimited with Premium.`,
+      premiumUrl: PREMIUM_URL,
+      remaining: 0,
+    });
+  }
+
   try {
     const accessToken = req.body.accessToken || req.query.accessToken;
     let balance = null;
@@ -184,6 +236,7 @@ app.post('/scan', async (req, res) => {
 
     const opportunities = req.body.opportunities;
     const profitable = await arbitrageur.scanForOpportunities(opportunities, balance);
+    const newUsed = incrementScans(key);
 
     profitable.forEach((opp) => broadcast({ type: 'opportunity', data: opp }));
 
@@ -192,6 +245,8 @@ app.post('/scan', async (req, res) => {
       scanned: (opportunities || arbitrageur.generateOpportunities(balance)).length,
       balance: balance?.available ?? null,
       plaid: isConfigured,
+      scansUsed: newUsed,
+      scansRemaining: Math.max(0, FREE_SCANS_PER_DAY - newUsed),
     });
   } catch (err) {
     console.error('Scan error:', err.message);
@@ -219,6 +274,7 @@ app.get('/premium', (_req, res) => {
     price: '$19 lifetime',
     url: PREMIUM_URL,
     features: ['unlimited scans', 'real-time alerts', 'custom thresholds', 'export'],
+    freeScansPerDay: FREE_SCANS_PER_DAY,
   });
 });
 
@@ -241,6 +297,7 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Venmo Arbitrageur listening on ${port}`);
   console.log(`Plaid configured: ${isConfigured}`);
   console.log(`Premium link: ${PREMIUM_URL}`);
+  console.log(`Free scans/day: ${FREE_SCANS_PER_DAY}`);
 });
 
 process.on('SIGTERM', () => {
