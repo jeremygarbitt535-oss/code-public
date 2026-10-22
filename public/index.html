@@ -87,6 +87,7 @@
       margin-bottom: 16px;
       text-align: center;
     }
+    #emailMsg { font-size: 13px; color: #22c55e; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -114,6 +115,16 @@
       </div>
     </div>
 
+    <div class="card">
+      <strong>Get alerts when high-yield windows open</strong>
+      <p style="color:#94a3b8; font-size:14px; margin:8px 0;">Enter your email. We'll only send when something worth scanning appears.</p>
+      <form id="emailForm" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="email" id="email" placeholder="you@email.com" required style="flex:1; min-width:200px;" />
+        <button type="submit" class="premium">Notify Me</button>
+      </form>
+      <div id="emailMsg"></div>
+    </div>
+
     <div id="results"></div>
   </div>
 
@@ -125,6 +136,8 @@
     const tokenEl = document.getElementById('token');
     const upgradeBanner = document.getElementById('upgradeBanner');
     const bannerCountdown = document.getElementById('bannerCountdown');
+    const emailForm = document.getElementById('emailForm');
+    const emailMsg = document.getElementById('emailMsg');
 
     function getHoursUntilReset() {
       const now = new Date();
@@ -153,6 +166,15 @@
       } catch (_) {}
     }
     updateScans();
+
+    emailForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      emailMsg.textContent = 'Thanks — you\'re on the list. (Alerts coming soon.)';
+      emailForm.reset();
+      // Optional: POST to your Formspree/endpoint here
+      // await fetch('https://formspree.io/f/YOUR_ID', { method: 'POST', body: new FormData(emailForm) });
+    };
 
     let ws;
     function connect() {
