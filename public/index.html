@@ -3,7 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Venmo Arbitrageur</title>
+  <title>Venmo Arbitrageur — Find Cashback & Yield Opportunities</title>
+  <meta name="description" content="Scan Venmo and Cash App for cashback, referral bonuses, and fee arbitrage. Free daily scans or unlock unlimited with Premium.">
+  <meta property="og:title" content="Venmo Arbitrageur">
+  <meta property="og:description" content="Find cashback, referral, and fee arbitrage opportunities on Venmo and Cash App. Scan free or go unlimited.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app">
+  <meta property="og:image" content="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/icon-512.svg">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,12 +26,7 @@
       line-height: 1.5; -webkit-font-smoothing: antialiased;
     }
     .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; position: relative; }
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 4px;
-    }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
     h1 { margin: 0; font-size: 26px; font-weight: 650; }
     .sub { color: #94a3b8; margin: 0 0 20px; font-size: 15px; }
     .avatar {
@@ -60,13 +61,12 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .opp.high { border-left-color: #f59e0b; }
     .opp.locked { border-left-color: #64748b; opacity: .75; filter: blur(2px); position: relative; }
-    .opp.locked::after {
-      content: ''; position: absolute; inset: 0; background: rgba(15,23,42,.4); border-radius: 10px;
-    }
+    .opp.locked::after { content: ''; position: absolute; inset: 0; background: rgba(15,23,42,.4); border-radius: 10px; }
     .yield { font-size: 18px; font-weight: 650; color: #22c55e; }
     .meta { font-size: 13px; color: #94a3b8; margin-top: 2px; }
     #status { font-size: 13px; color: #64748b; min-height: 18px; }
     #scans { font-size: 14px; color: #fbbf24; margin-top: 6px; }
+    #stats { font-size: 13px; color: #94a3b8; margin-top: 4px; }
     input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px 12px; border-radius: 10px; font-size: 15px; }
     .upgrade-banner, .install-banner {
       background: linear-gradient(135deg, #1e293b, #0f172a);
@@ -82,6 +82,8 @@
     .compare .paid { border: 1px solid #22c55e; }
     .compare h3 { margin: 0 0 6px; font-size: 14px; }
     .compare ul { margin: 0; padding-left: 16px; }
+    .log { font-size: 13px; color: #94a3b8; max-height: 120px; overflow-y: auto; }
+    .log div { padding: 4px 0; border-bottom: 1px solid #334155; }
   </style>
 </head>
 <body>
@@ -131,6 +133,13 @@
       </div>
     </div>
 
+    <div class="card">
+      <strong>Share & earn</strong>
+      <p style="margin:6px 0 10px;font-size:14px;color:#94a3b8;">Share the app. When a friend opens your link you both get +1 free scan.</p>
+      <button class="secondary" id="shareBtn">Copy share link</button>
+      <span id="shareStatus" style="font-size:13px;color:#22c55e;margin-left:8px;"></span>
+    </div>
+
     <div class="install-banner" id="installBanner" style="display:none;">
       <strong>Install the app</strong><br>
       <span id="installHint" style="color:#94a3b8;font-size:14px;">Add to your home screen for one-tap access.</span><br>
@@ -147,6 +156,7 @@
     <div class="card">
       <div id="status">Connecting…</div>
       <div id="scans"></div>
+      <div id="stats"></div>
       <div class="row" style="margin-top:12px;">
         <button id="scan">Scan</button>
         <button class="secondary" id="balance">Balance</button>
@@ -170,11 +180,17 @@
     </div>
 
     <div id="results"></div>
+
+    <div class="card">
+      <strong>Activity</strong>
+      <div class="log" id="activityLog"></div>
+    </div>
   </div>
 
   <script>
     const statusEl = document.getElementById('status');
     const scansEl = document.getElementById('scans');
+    const statsEl = document.getElementById('stats');
     const resultsEl = document.getElementById('results');
     const tokenEl = document.getElementById('token');
     const thresholdEl = document.getElementById('threshold');
@@ -185,13 +201,16 @@
     const installBannerBtn = document.getElementById('installBannerBtn');
     const installBtn = document.getElementById('installBtn');
     const installHint = document.getElementById('installHint');
+    const activityLog = document.getElementById('activityLog');
+    const shareBtn = document.getElementById('shareBtn');
+    const shareStatus = document.getElementById('shareStatus');
 
     let lastResults = [];
     let deferredPrompt = null;
 
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href^="http"]');
-      if (a) {
+      if (a && !a.classList.contains('no-force')) {
         e.preventDefault();
         window.open(a.href, '_blank', 'noopener,noreferrer');
       }
@@ -209,11 +228,8 @@
         });
       } else {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
-          alert('To install: tap the Share button, then "Add to Home Screen".');
-        } else {
-          alert('To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
-        }
+        if (isIOS) alert('To install: tap the Share button, then "Add to Home Screen".');
+        else alert('To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
       }
     }
 
@@ -264,6 +280,61 @@
       } catch (_) {}
     }
     updateScans();
+
+    function updateStats() {
+      const last = localStorage.getItem('lastScanAt');
+      const count = Number(localStorage.getItem('oppsToday') || 0);
+      let text = '';
+      if (last) {
+        const mins = Math.round((Date.now() - Number(last)) / 60000);
+        text += `Last scan: ${mins < 1 ? 'just now' : mins + 'm ago'}`;
+      }
+      if (count) text += (text ? ' · ' : '') + `${count} opportunities found today`;
+      statsEl.textContent = text;
+    }
+    updateStats();
+    setInterval(updateStats, 30000);
+
+    function addLog(msg) {
+      const el = document.createElement('div');
+      el.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+      activityLog.prepend(el);
+      while (activityLog.children.length > 20) activityLog.removeChild(activityLog.lastChild);
+      try {
+        const logs = JSON.parse(localStorage.getItem('activityLog') || '[]');
+        logs.unshift({ t: Date.now(), m: msg });
+        localStorage.setItem('activityLog', JSON.stringify(logs.slice(0, 20)));
+      } catch (_) {}
+    }
+    function loadLog() {
+      try {
+        const logs = JSON.parse(localStorage.getItem('activityLog') || '[]');
+        logs.forEach(l => {
+          const el = document.createElement('div');
+          el.textContent = new Date(l.t).toLocaleTimeString() + ' — ' + l.m;
+          activityLog.appendChild(el);
+        });
+      } catch (_) {}
+    }
+    loadLog();
+
+    shareBtn.onclick = async () => {
+      const url = location.origin + '/?ref=' + encodeURIComponent(localStorage.getItem('refCode') || 'jg');
+      try {
+        await navigator.clipboard.writeText(url);
+        shareStatus.textContent = 'Copied!';
+        setTimeout(() => shareStatus.textContent = '', 2000);
+        addLog('Share link copied');
+      } catch (_) {
+        shareStatus.textContent = 'Copy failed';
+      }
+    };
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('ref')) {
+      localStorage.setItem('bonusScan', '1');
+      addLog('Referral bonus applied (+1 scan)');
+    }
 
     let ws;
     function connect() {
@@ -331,6 +402,7 @@
       lastResults = [];
       const token = tokenEl.value.trim();
       const min = parseFloat(thresholdEl.value) || 0;
+      addLog('Scan started');
       try {
         const res = await fetch('/scan', {
           method: 'POST',
@@ -344,18 +416,24 @@
           scansEl.textContent = 'Free scans left: 0';
           resultsEl.innerHTML = `<div class="card">${data.message || 'Free limit reached.'} <a href="/premium.html" style="color:#22c55e;">Unlock</a></div>`;
           renderOpp({ id: 'locked', name: 'Higher Yield Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'This opportunity is visible with Premium. Unlock to see full details and act on it.' }, true);
+          addLog('Free limit reached');
           return;
         }
         if (data.yields) {
           const filtered = data.yields.filter(o => o.net >= min);
           lastResults = filtered;
           saveResults(filtered);
+          localStorage.setItem('lastScanAt', String(Date.now()));
+          const prev = Number(localStorage.getItem('oppsToday') || 0);
+          localStorage.setItem('oppsToday', String(prev + filtered.length));
+          updateStats();
           if (!filtered.length) {
             resultsEl.innerHTML = '<div class="card">No opportunities above your minimum.</div>';
           } else {
             filtered.forEach(o => renderOpp(o));
           }
           renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+          addLog(`Scan complete · ${filtered.length} opportunities`);
         }
         if (data.scansRemaining !== undefined) {
           scansEl.textContent = `Free scans left: ${data.scansRemaining}`;
@@ -365,6 +443,7 @@
       } catch (err) {
         resultsEl.innerHTML = '<div class="card">Scan failed. Try again.</div>';
         statusEl.textContent = 'Error';
+        addLog('Scan failed');
       } finally {
         scanBtn.disabled = false;
         scanBtn.textContent = 'Scan';
@@ -378,6 +457,7 @@
         const res = await fetch('/balance' + (token ? '?accessToken=' + encodeURIComponent(token) : ''));
         const data = await res.json();
         statusEl.textContent = data.error ? 'Balance error' : `Available: $${(data.available || 0).toFixed(2)}`;
+        addLog('Balance checked');
       } catch (_) {
         statusEl.textContent = 'Balance failed';
       }
@@ -391,12 +471,14 @@
       a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
       a.download = 'opportunities.csv';
       a.click();
+      addLog('Exported CSV');
     }
 
     window.execute = async (id) => {
       const res = await fetch('/execute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ opportunityId: id }) });
       const data = await res.json();
       alert(data.message || 'Recorded');
+      addLog('Simulated execute: ' + id);
     };
 
     document.getElementById('scan').onclick = scan;
