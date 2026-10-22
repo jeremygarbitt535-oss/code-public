@@ -6,11 +6,11 @@ const { getAccountBalance, getTransactions, isConfigured } = require('./plaidCli
 require('dotenv').config();
 
 const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
+const APP_URL = process.env.APP_URL || 'https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app';
 const FREE_SCANS_PER_DAY = 3;
 const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret';
 const ALERT_THRESHOLD = Number(process.env.ALERT_THRESHOLD) || 1.0;
 
-// Support single or multiple webhooks (comma-separated)
 const ALERT_WEBHOOKS = (process.env.ALERT_WEBHOOKS || process.env.ALERT_WEBHOOK || '')
   .split(',')
   .map(s => s.trim())
@@ -79,7 +79,10 @@ async function sendAlert(opportunities) {
   const high = opportunities.filter(o => o.net >= ALERT_THRESHOLD);
   if (!high.length || !ALERT_WEBHOOKS.length) return;
 
-  const text = `Venmo Arbitrageur alert:\n${high.map(o => `${o.name}: +$${o.net.toFixed(2)}`).join('\n')}`;
+  const lines = high.map(o => `${o.name}: +$${o.net.toFixed(2)}`);
+  const top = high[0];
+  const deep = top ? `${APP_URL}/?opp=${encodeURIComponent(top.id)}` : APP_URL;
+  const text = `Venmo Arbitrageur alert:\n${lines.join('\n')}\n\nOpen: ${deep}`;
   console.log('ALERT:', text);
 
   await Promise.all(ALERT_WEBHOOKS.map(url => sendToWebhook(url, text, high)));
@@ -153,7 +156,7 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
-    version: '1.5.0',
+    version: '1.6.0',
     freeScansPerDay: FREE_SCANS_PER_DAY,
     recentScans: recentResults.length,
     alertWebhooks: ALERT_WEBHOOKS.length,
