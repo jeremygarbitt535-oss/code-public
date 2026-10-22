@@ -88,6 +88,7 @@
       text-align: center;
     }
     #emailMsg { font-size: 13px; color: #22c55e; margin-top: 8px; }
+    .actions { margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -105,13 +106,16 @@
       <div id="status">Connecting...</div>
       <div id="scans"></div>
       <div id="countdown"></div>
-      <div style="margin-top: 12px;">
+      <div class="actions">
         <button id="scan">Scan Opportunities</button>
         <button class="secondary" id="balance">Check Balance</button>
+        <button class="secondary" id="export">Export CSV</button>
         <a class="btn premium" href="/premium.html">Premium Features</a>
       </div>
-      <div style="margin-top: 12px;">
-        <input id="token" placeholder="Plaid access token (optional, uses demo if empty)" />
+      <div style="margin-top: 12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <label style="font-size:14px; color:#94a3b8;">Min yield $</label>
+        <input type="number" id="threshold" step="0.1" min="0" value="0.5" style="max-width:100px;" />
+        <input id="token" placeholder="Plaid access token (optional)" style="flex:1;" />
       </div>
     </div>
 
@@ -134,10 +138,18 @@
     const countdownEl = document.getElementById('countdown');
     const resultsEl = document.getElementById('results');
     const tokenEl = document.getElementById('token');
+    const thresholdEl = document.getElementById('threshold');
     const upgradeBanner = document.getElementById('upgradeBanner');
     const bannerCountdown = document.getElementById('bannerCountdown');
     const emailForm = document.getElementById('emailForm');
     const emailMsg = document.getElementById('emailMsg');
+
+    let lastResults = [];
+
+    // Load saved threshold
+    const savedThreshold = localStorage.getItem('yieldThreshold');
+    if (savedThreshold) thresholdEl.value = savedThreshold;
+    thresholdEl.onchange = () => localStorage.setItem('yieldThreshold', thresholdEl.value);
 
     function getHoursUntilReset() {
       const now = new Date();
@@ -169,11 +181,8 @@
 
     emailForm.onsubmit = async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
       emailMsg.textContent = 'Thanks — you\'re on the list. (Alerts coming soon.)';
       emailForm.reset();
-      // Optional: POST to your Formspree/endpoint here
-      // await fetch('https://formspree.io/f/YOUR_ID', { method: 'POST', body: new FormData(emailForm) });
     };
 
     let ws;
@@ -205,7 +214,12 @@
         </div>
         <div class="meta">${opp.method} · ${opp.riskLevel} risk · gross $${opp.gross.toFixed(2)}</div>
         <div style="margin-top:6px;font-size:14px;">${opp.description || ''}</div>
-        ${locked ? '<a href="/premium.html" style="display:inline-block;margin-top:8px;color:#22c55e;font-size:13px;">Unlock to view details</a>' : `<button style="margin-top:8px;padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Execute (sim)</button>`}
+        <div style="margin-top:8px;">
+          ${locked ? '<a href="/premium.html" style="color:#22c55e;font-size:13px;">Unlock to view details</a>' : `
+            <button style="padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Execute (sim)</button>
+            <button style="padding:6px 12px;font-size:13px;" class="secondary" onclick="shareOpp('${opp.name || opp.id}', ${opp.net})">Share</button>
+          `}
+        </div>
       `;
       resultsEl.prepend(div);
     }
@@ -224,7 +238,9 @@
 
     async function scan() {
       resultsEl.innerHTML = '';
+      lastResults = [];
       const token = tokenEl.value.trim();
+      const minYield = parseFloat(thresholdEl.value) || 0;
       const res = await fetch('/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -239,9 +255,11 @@
         return;
       }
       if (data.yields) {
-        data.yields.forEach(o => renderOpp(o));
-        if (!data.yields.length) {
-          resultsEl.innerHTML = '<div class="card">No opportunities above threshold.</div>';
+        const filtered = data.yields.filter(o => o.net >= minYield);
+        lastResults = filtered;
+        filtered.forEach(o => renderOpp(o));
+        if (!filtered.length) {
+          resultsEl.innerHTML = '<div class="card">No opportunities above your threshold.</div>';
         }
         addLockedOpportunity();
       }
@@ -249,7 +267,7 @@
         scansEl.textContent = `Free scans remaining today: ${data.scansRemaining}`;
         if (data.scansRemaining === 0) upgradeBanner.style.display = 'block';
       }
-      statusEl.textContent = `Scanned ${data.scanned || 0} · ${data.yields?.length || 0} profitable`;
+      statusEl.textContent = `Scanned ${data.scanned || 0} · ${data.yields?.length || 0} profitable (showing ≥ $${minYield})`;
     }
 
     async function checkBalance() {
@@ -259,6 +277,30 @@
       statusEl.textContent = data.error
         ? 'Balance error: ' + data.error
         : `Available: $${(data.available || 0).toFixed(2)} (${data.source || 'unknown'})`;
+    }
+
+    function exportCSV() {
+      if (!lastResults.length) {
+        alert('Scan first to export results.');
+        return;
+      }
+      const headers = ['Name', 'Method', 'Net Yield', 'Gross', 'Risk', 'Description'];
+      const rows = lastResults.map(o => [
+        `"${(o.name || o.id).replace(/"/g, '""')}"`,
+        `"${o.method}"`,
+        o.net,
+        o.gross,
+        o.riskLevel,
+        `"${(o.description || '').replace(/"/g, '""')}"`
+      ].join(','));
+      const csv = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'venmo-opportunities.csv';
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     window.execute = async (id) => {
@@ -271,8 +313,18 @@
       alert(data.message || 'Done');
     };
 
+    window.shareOpp = (name, net) => {
+      const text = `Found a $${net.toFixed(2)} net yield opportunity: ${name}\nTry the scanner: ${location.origin}`;
+      if (navigator.share) {
+        navigator.share({ title: 'Venmo Opportunity', text }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'));
+      }
+    };
+
     document.getElementById('scan').onclick = scan;
     document.getElementById('balance').onclick = checkBalance;
+    document.getElementById('export').onclick = exportCSV;
   </script>
 </body>
 </html>
