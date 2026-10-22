@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Unlocked — Venmo Arbitrageur</title>
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px 16px; background: #0f172a; color: #e2e8f0; text-align: center; }
+    .card { max-width: 420px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 28px; border: 1px solid #22c55e; }
+    h1 { margin: 0 0 8px; color: #22c55e; }
+    p { color: #94a3b8; }
+    a.btn { display: inline-block; background: #22c55e; color: white; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: 600; margin-top: 16px; }
+    #status { margin-top: 12px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Premium Unlocked</h1>
+    <p>Your purchase is confirmed. Activating unlimited scans…</p>
+    <div id="status">Connecting…</div>
+    <a class="btn" href="/">Open the app</a>
+  </div>
+  <script>
+    (async () => {
+      const params = new URLSearchParams(location.search);
+      const sessionId = params.get('session_id') || params.get('premium') || '';
+      const status = document.getElementById('status');
+      try {
+        const res = await fetch('/claim-premium', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        });
+        const data = await res.json();
+        if (data.code) {
+          localStorage.setItem('premiumCode', data.code);
+          status.textContent = 'Unlocked! Redirecting…';
+          setTimeout(() => location.href = '/?premium=' + encodeURIComponent(data.code), 1200);
+        } else {
+          status.textContent = data.message || 'Check your alerts for the unlock code.';
+        }
+      } catch (e) {
+        status.textContent = 'Could not auto-unlock. Check your alerts for the code.';
+      }
+    })();
+  </script>
+</body>
+</html>
