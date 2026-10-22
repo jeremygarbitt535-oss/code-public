@@ -48,10 +48,28 @@
       border-radius: 8px;
     }
     .opp.high { border-left-color: #f59e0b; }
+    .opp.locked {
+      border-left-color: #64748b;
+      opacity: 0.7;
+      position: relative;
+    }
+    .opp.locked::after {
+      content: 'PREMIUM';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #22c55e;
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
     .yield { font-size: 20px; font-weight: 600; color: #22c55e; }
     .meta { font-size: 13px; color: #94a3b8; }
     #status { font-size: 13px; color: #64748b; }
     #scans { font-size: 14px; color: #fbbf24; margin-top: 8px; }
+    #countdown { font-size: 13px; color: #94a3b8; margin-top: 4px; }
     input {
       background: #0f172a;
       border: 1px solid #334155;
@@ -78,12 +96,14 @@
 
     <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
       <strong>You've used all free scans today.</strong><br>
+      <span id="bannerCountdown"></span><br>
       <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock Unlimited — $19</a>
     </div>
 
     <div class="card">
       <div id="status">Connecting...</div>
       <div id="scans"></div>
+      <div id="countdown"></div>
       <div style="margin-top: 12px;">
         <button id="scan">Scan Opportunities</button>
         <button class="secondary" id="balance">Check Balance</button>
@@ -100,9 +120,29 @@
   <script>
     const statusEl = document.getElementById('status');
     const scansEl = document.getElementById('scans');
+    const countdownEl = document.getElementById('countdown');
     const resultsEl = document.getElementById('results');
     const tokenEl = document.getElementById('token');
     const upgradeBanner = document.getElementById('upgradeBanner');
+    const bannerCountdown = document.getElementById('bannerCountdown');
+
+    function getHoursUntilReset() {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      tomorrow.setUTCHours(0, 0, 0, 0);
+      const ms = tomorrow - now;
+      return Math.ceil(ms / (1000 * 60 * 60));
+    }
+
+    function updateCountdown() {
+      const hours = getHoursUntilReset();
+      const text = `Free scans reset in ~${hours} hour${hours !== 1 ? 's' : ''}`;
+      countdownEl.textContent = text;
+      if (bannerCountdown) bannerCountdown.textContent = text;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
 
     async function updateScans() {
       try {
@@ -133,9 +173,9 @@
     }
     connect();
 
-    function renderOpp(opp) {
+    function renderOpp(opp, locked = false) {
       const div = document.createElement('div');
-      div.className = 'opp' + (opp.riskLevel === 'High' ? ' high' : '');
+      div.className = 'opp' + (opp.riskLevel === 'High' ? ' high' : '') + (locked ? ' locked' : '');
       div.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:baseline;">
           <strong>${opp.name || opp.id}</strong>
@@ -143,9 +183,21 @@
         </div>
         <div class="meta">${opp.method} · ${opp.riskLevel} risk · gross $${opp.gross.toFixed(2)}</div>
         <div style="margin-top:6px;font-size:14px;">${opp.description || ''}</div>
-        <button style="margin-top:8px;padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Execute (sim)</button>
+        ${locked ? '<a href="/premium.html" style="display:inline-block;margin-top:8px;color:#22c55e;font-size:13px;">Unlock to view details</a>' : `<button style="margin-top:8px;padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Execute (sim)</button>`}
       `;
       resultsEl.prepend(div);
+    }
+
+    function addLockedOpportunity() {
+      renderOpp({
+        id: 'premium-locked',
+        name: 'High-Yield Premium Window',
+        method: 'Venmo',
+        net: 4.25,
+        gross: 4.80,
+        riskLevel: 'Low',
+        description: 'A higher-yield opportunity only visible with Premium.'
+      }, true);
     }
 
     async function scan() {
@@ -161,13 +213,15 @@
         upgradeBanner.style.display = 'block';
         scansEl.textContent = 'Free scans remaining today: 0';
         resultsEl.innerHTML = `<div class="card">${data.message || 'Free limit reached.'} <a href="/premium.html" style="color:#22c55e;">Unlock Premium</a></div>`;
+        addLockedOpportunity();
         return;
       }
       if (data.yields) {
-        data.yields.forEach(renderOpp);
+        data.yields.forEach(o => renderOpp(o));
         if (!data.yields.length) {
           resultsEl.innerHTML = '<div class="card">No opportunities above threshold.</div>';
         }
+        addLockedOpportunity();
       }
       if (data.scansRemaining !== undefined) {
         scansEl.textContent = `Free scans remaining today: ${data.scansRemaining}`;
