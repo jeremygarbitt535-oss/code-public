@@ -24,7 +24,7 @@
       margin-bottom: 16px;
       border: 1px solid #334155;
     }
-    button {
+    button, a.btn {
       background: #3b82f6;
       color: white;
       border: none;
@@ -33,11 +33,13 @@
       font-size: 15px;
       cursor: pointer;
       margin-right: 8px;
+      text-decoration: none;
+      display: inline-block;
     }
-    button:hover { background: #2563eb; }
-    button.secondary { background: #475569; }
-    button.premium { background: #22c55e; }
-    button.premium:hover { background: #16a34a; }
+    button:hover, a.btn:hover { background: #2563eb; }
+    button.secondary, a.secondary { background: #475569; }
+    button.premium, a.premium { background: #22c55e; }
+    button.premium:hover, a.premium:hover { background: #16a34a; }
     .opp {
       background: #0f172a;
       border-left: 4px solid #22c55e;
@@ -70,7 +72,7 @@
       <div style="margin-top: 12px;">
         <button id="scan">Scan Opportunities</button>
         <button class="secondary" id="balance">Check Balance</button>
-        <button class="premium" id="premium">Unlock Premium — $19</button>
+        <a class="btn premium" href="/premium.html">Premium Features</a>
       </div>
       <div style="margin-top: 12px;">
         <input id="token" placeholder="Plaid access token (optional, uses demo if empty)" />
@@ -84,11 +86,6 @@
     const statusEl = document.getElementById('status');
     const resultsEl = document.getElementById('results');
     const tokenEl = document.getElementById('token');
-    let premiumUrl = 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
-
-    fetch('/premium').then(r => r.json()).then(d => {
-      if (d.url) premiumUrl = d.url;
-    }).catch(() => {});
 
     let ws;
     function connect() {
@@ -163,7 +160,6 @@
 
     document.getElementById('scan').onclick = scan;
     document.getElementById('balance').onclick = checkBalance;
-    document.getElementById('premium').onclick = () => window.open(premiumUrl, '_blank');
   </script>
 </body>
 </html>
