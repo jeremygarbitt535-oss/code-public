@@ -40,16 +40,21 @@
     button.cashapp:hover, a.cashapp:hover { background: #00b82b; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     a.ext-link {
-      color: #60a5fa;
+      color: #1d4ed8;
       text-decoration: underline;
-      text-underline-offset: 3px;
-      font-weight: 500;
+      text-underline-offset: 2px;
+      font-weight: 400;
       font-size: 14px;
-      margin: 0 6px;
+      margin: 0 8px 0 0;
       cursor: pointer;
     }
-    a.ext-link:hover { color: #93c5fd; text-decoration: underline; }
-    a.ext-link::after { content: " \2197"; font-size: 11px; opacity: .7; }
+    a.ext-link:hover {
+      color: #1e40af;
+      text-decoration: underline;
+    }
+    a.ext-link:visited {
+      color: #5b21b6;
+    }
     .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .opp.high { border-left-color: #f59e0b; }
