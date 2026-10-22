@@ -6,8 +6,8 @@ const { WebSocketServer } = require('ws');
 const { getAccountBalance, getTransactions, isConfigured } = require('./plaidClient');
 require('dotenv').config();
 
-const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
-const APP_URL = process.env.APP_URL || 'https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app';
+const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_00w00k3wSfG9gdTf102ZO02';
+const APP_URL = process.env.APP_URL || 'https://venmo-arbitrageur.vercel.app';
 const FREE_SCANS_PER_DAY = 3;
 const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret';
 const ALERT_THRESHOLD = Number(process.env.ALERT_THRESHOLD) || 1.0;
