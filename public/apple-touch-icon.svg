@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
-  <rect width="180" height="180" fill="#0f172a"/>
-  <circle cx="90" cy="90" r="65" fill="#22c55e"/>
-  <text x="90" y="108" font-family="Arial" font-size="75" font-weight="bold" fill="white" text-anchor="middle">V</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <rect width="180" height="180" rx="40" fill="#0f172a"/>
+  <path d="M45 56 L90 134 L135 56 L120 56 L90 106 L60 56 Z" fill="#ffffff"/>
+  <path d="M120 56 L135 56 L90 134 L105 134 Z" fill="#22c55e"/>
 </svg>
