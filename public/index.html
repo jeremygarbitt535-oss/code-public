@@ -76,7 +76,7 @@
       border-radius: 10px;
       font-size: 15px;
     }
-    .upgrade-banner {
+    .upgrade-banner, .install-banner {
       background: linear-gradient(135deg, #1e293b, #0f172a);
       border: 1px solid #22c55e;
       border-radius: 14px;
@@ -84,6 +84,7 @@
       margin-bottom: 14px;
       text-align: center;
     }
+    .install-banner { border-color: #3b82f6; }
     .skeleton {
       height: 72px;
       background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
@@ -99,6 +100,12 @@
   <div class="container">
     <h1>Venmo Arbitrageur</h1>
     <p class="sub">Scan opportunities and net yield</p>
+
+    <div class="install-banner" id="installBanner" style="display:none;">
+      <strong>Install the app</strong><br>
+      <span id="installHint" style="color:#94a3b8;font-size:14px;">Add to your home screen for one-tap access.</span><br>
+      <button id="installBtn" class="premium" style="margin-top:10px;">Install App</button>
+    </div>
 
     <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
       <strong>Free scans used for today.</strong><br>
@@ -134,8 +141,45 @@
     const upgradeBanner = document.getElementById('upgradeBanner');
     const bannerCountdown = document.getElementById('bannerCountdown');
     const scanBtn = document.getElementById('scan');
+    const installBanner = document.getElementById('installBanner');
+    const installBtn = document.getElementById('installBtn');
+    const installHint = document.getElementById('installHint');
 
     let lastResults = [];
+    let deferredPrompt = null;
+
+    // PWA install
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!window.matchMedia('(display-mode: standalone)').matches) {
+        installBanner.style.display = 'block';
+        installHint.textContent = 'Add to your home screen for one-tap access.';
+      }
+    });
+
+    installBtn.onclick = async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') installBanner.style.display = 'none';
+        deferredPrompt = null;
+      } else {
+        // iOS / fallback
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          alert('To install: tap the Share button, then "Add to Home Screen".');
+        } else {
+          alert('To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
+        }
+      }
+    };
+
+    // Show iOS hint if not installed
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone) {
+      installBanner.style.display = 'block';
+      installHint.textContent = 'Tap Share → Add to Home Screen.';
+    }
 
     const saved = localStorage.getItem('yieldThreshold');
     if (saved) thresholdEl.value = saved;
