@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Venmo Arbitrageur</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#22c55e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Arbitrageur">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
     * { box-sizing: border-box; }
     body {
@@ -146,7 +152,6 @@
 
     let lastResults = [];
 
-    // Load saved threshold
     const savedThreshold = localStorage.getItem('yieldThreshold');
     if (savedThreshold) thresholdEl.value = savedThreshold;
     thresholdEl.onchange = () => localStorage.setItem('yieldThreshold', thresholdEl.value);
@@ -325,6 +330,10 @@
     document.getElementById('scan').onclick = scan;
     document.getElementById('balance').onclick = checkBalance;
     document.getElementById('export').onclick = exportCSV;
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
   </script>
 </body>
 </html>
