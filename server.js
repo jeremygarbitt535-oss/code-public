@@ -22,6 +22,7 @@ const scanCounts = new Map();
 const recentResults = [];
 const premiumCodes = new Map();
 const sessionToCode = new Map();
+const subscribers = []; // simple in-memory list — replace with real storage/email service later
 
 function getClientKey(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
@@ -174,8 +175,23 @@ class VenmoArbitrageur {
 
 const arbitrageur = new VenmoArbitrageur();
 
+app.post('/subscribe', (req, res) => {
+  const email = (req.body?.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
+  if (!subscribers.includes(email)) {
+    subscribers.push(email);
+    console.log('New subscriber:', email);
+  }
+  res.json({ ok: true, message: 'Subscribed' });
+});
+
+app.get('/subscribers', (_req, res) => {
+  // simple protected view — in production gate this
+  res.json({ count: subscribers.length, emails: subscribers.slice(-50) });
+});
+
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, plaid: isConfigured, version: '1.8.0', freeScansPerDay: FREE_SCANS_PER_DAY, premiumCodes: premiumCodes.size, alertWebhooks: ALERT_WEBHOOKS.length });
+  res.json({ ok: true, plaid: isConfigured, version: '1.9.0', freeScansPerDay: FREE_SCANS_PER_DAY, premiumCodes: premiumCodes.size, alertWebhooks: ALERT_WEBHOOKS.length, subscribers: subscribers.length });
 });
 
 app.get('/scans-remaining', (req, res) => {
