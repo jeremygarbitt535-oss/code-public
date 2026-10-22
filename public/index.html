@@ -15,37 +15,19 @@
     html, body { height: 100%; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #0f172a;
-      color: #e2e8f0;
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
+      margin: 0; padding: 0;
+      background: #0f172a; color: #e2e8f0;
+      line-height: 1.5; -webkit-font-smoothing: antialiased;
     }
     .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
     h1 { margin: 0 0 4px; font-size: 26px; font-weight: 650; }
     .sub { color: #94a3b8; margin: 0 0 20px; font-size: 15px; }
-    .card {
-      background: #1e293b;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 14px;
-      border: 1px solid #334155;
-    }
+    .card { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 1px solid #334155; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     button, a.btn {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-size: 15px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background .15s;
+      background: #3b82f6; color: white; border: none; padding: 10px 16px;
+      border-radius: 10px; font-size: 15px; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; transition: background .15s;
     }
     button:active, a.btn:active { transform: scale(.98); }
     button:hover, a.btn:hover { background: #2563eb; }
@@ -53,14 +35,7 @@
     button.premium, a.premium { background: #22c55e; }
     button.premium:hover, a.premium:hover { background: #16a34a; }
     button:disabled { opacity: .6; cursor: not-allowed; }
-    .opp {
-      background: #0f172a;
-      border-left: 4px solid #22c55e;
-      padding: 12px 14px;
-      margin: 8px 0;
-      border-radius: 10px;
-      animation: fadeIn .25s ease;
-    }
+    .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .opp.high { border-left-color: #f59e0b; }
     .opp.locked { border-left-color: #64748b; opacity: .75; }
@@ -68,31 +43,13 @@
     .meta { font-size: 13px; color: #94a3b8; margin-top: 2px; }
     #status { font-size: 13px; color: #64748b; min-height: 18px; }
     #scans { font-size: 14px; color: #fbbf24; margin-top: 6px; }
-    input {
-      background: #0f172a;
-      border: 1px solid #334155;
-      color: #e2e8f0;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 15px;
-    }
+    input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px 12px; border-radius: 10px; font-size: 15px; }
     .upgrade-banner, .install-banner {
       background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 1px solid #22c55e;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 14px;
-      text-align: center;
+      border: 1px solid #22c55e; border-radius: 14px; padding: 16px; margin-bottom: 14px; text-align: center;
     }
     .install-banner { border-color: #3b82f6; }
-    .skeleton {
-      height: 72px;
-      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.2s infinite;
-      border-radius: 10px;
-      margin: 8px 0;
-    }
+    .skeleton { height: 72px; background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 10px; margin: 8px 0; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
@@ -104,7 +61,7 @@
     <div class="install-banner" id="installBanner" style="display:none;">
       <strong>Install the app</strong><br>
       <span id="installHint" style="color:#94a3b8;font-size:14px;">Add to your home screen for one-tap access.</span><br>
-      <button id="installBtn" class="premium" style="margin-top:10px;">Install App</button>
+      <button id="installBannerBtn" class="premium" style="margin-top:10px;">Install App</button>
     </div>
 
     <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
@@ -120,6 +77,7 @@
         <button id="scan">Scan</button>
         <button class="secondary" id="balance">Balance</button>
         <button class="secondary" id="export">Export</button>
+        <button class="secondary" id="installBtn">Install App</button>
         <a class="btn premium" href="/premium.html">Premium</a>
       </div>
       <div class="row" style="margin-top:12px;">
@@ -142,13 +100,33 @@
     const bannerCountdown = document.getElementById('bannerCountdown');
     const scanBtn = document.getElementById('scan');
     const installBanner = document.getElementById('installBanner');
+    const installBannerBtn = document.getElementById('installBannerBtn');
     const installBtn = document.getElementById('installBtn');
     const installHint = document.getElementById('installHint');
 
     let lastResults = [];
     let deferredPrompt = null;
 
-    // PWA install
+    function doInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(({ outcome }) => {
+          if (outcome === 'accepted') {
+            installBanner.style.display = 'none';
+            installBtn.style.display = 'none';
+          }
+          deferredPrompt = null;
+        });
+      } else {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          alert('To install: tap the Share button, then "Add to Home Screen".');
+        } else {
+          alert('To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
+        }
+      }
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
@@ -158,27 +136,18 @@
       }
     });
 
-    installBtn.onclick = async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') installBanner.style.display = 'none';
-        deferredPrompt = null;
-      } else {
-        // iOS / fallback
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
-          alert('To install: tap the Share button, then "Add to Home Screen".');
-        } else {
-          alert('To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
-        }
-      }
-    };
+    installBannerBtn.onclick = doInstall;
+    installBtn.onclick = doInstall;
 
-    // Show iOS hint if not installed
     if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.navigator.standalone) {
       installBanner.style.display = 'block';
       installHint.textContent = 'Tap Share → Add to Home Screen.';
+    }
+
+    // Hide install button if already in standalone
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      installBtn.style.display = 'none';
+      installBanner.style.display = 'none';
     }
 
     const saved = localStorage.getItem('yieldThreshold');
@@ -192,8 +161,7 @@
     }
     function updateCountdown() {
       const h = hoursUntilReset();
-      const text = `Resets in ~${h}h`;
-      if (bannerCountdown) bannerCountdown.textContent = text;
+      if (bannerCountdown) bannerCountdown.textContent = `Resets in ~${h}h`;
     }
     updateCountdown();
     setInterval(updateCountdown, 60000);
