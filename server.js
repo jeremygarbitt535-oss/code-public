@@ -5,11 +5,12 @@ const { WebSocketServer } = require('ws');
 const { getAccountBalance, getTransactions, isConfigured } = require('./plaidClient');
 require('dotenv').config();
 
+const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
+
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Basic request logging
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -154,7 +155,7 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
+    version: '1.1.0',
   });
 });
 
@@ -212,11 +213,11 @@ app.post('/execute', async (req, res) => {
   });
 });
 
-// Monetization stub — ready for Stripe Checkout later
 app.get('/premium', (_req, res) => {
   res.json({
-    status: 'coming_soon',
-    message: 'Premium scans and alerts available after Stripe connection.',
+    status: 'available',
+    price: '$19 lifetime',
+    url: PREMIUM_URL,
     features: ['unlimited scans', 'real-time alerts', 'custom thresholds', 'export'],
   });
 });
@@ -239,7 +240,7 @@ const port = process.env.PORT || 3000;
 server.listen(port, '0.0.0.0', () => {
   console.log(`Venmo Arbitrageur listening on ${port}`);
   console.log(`Plaid configured: ${isConfigured}`);
-  console.log(`Health: http://localhost:${port}/health`);
+  console.log(`Premium link: ${PREMIUM_URL}`);
 });
 
 process.on('SIGTERM', () => {

@@ -36,6 +36,8 @@
     }
     button:hover { background: #2563eb; }
     button.secondary { background: #475569; }
+    button.premium { background: #22c55e; }
+    button.premium:hover { background: #16a34a; }
     .opp {
       background: #0f172a;
       border-left: 4px solid #22c55e;
@@ -68,6 +70,7 @@
       <div style="margin-top: 12px;">
         <button id="scan">Scan Opportunities</button>
         <button class="secondary" id="balance">Check Balance</button>
+        <button class="premium" id="premium">Unlock Premium — $19</button>
       </div>
       <div style="margin-top: 12px;">
         <input id="token" placeholder="Plaid access token (optional, uses demo if empty)" />
@@ -81,6 +84,11 @@
     const statusEl = document.getElementById('status');
     const resultsEl = document.getElementById('results');
     const tokenEl = document.getElementById('token');
+    let premiumUrl = 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
+
+    fetch('/premium').then(r => r.json()).then(d => {
+      if (d.url) premiumUrl = d.url;
+    }).catch(() => {});
 
     let ws;
     function connect() {
@@ -155,6 +163,7 @@
 
     document.getElementById('scan').onclick = scan;
     document.getElementById('balance').onclick = checkBalance;
+    document.getElementById('premium').onclick = () => window.open(premiumUrl, '_blank');
   </script>
 </body>
 </html>
