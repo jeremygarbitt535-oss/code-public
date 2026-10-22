@@ -43,18 +43,14 @@
       color: #1d4ed8;
       text-decoration: underline;
       text-underline-offset: 2px;
-      font-weight: 400;
-      font-size: 14px;
-      margin: 0 8px 0 0;
+      font-weight: 500;
+      font-size: 15px;
+      margin: 0 10px 0 0;
       cursor: pointer;
+      padding: 2px 0;
     }
-    a.ext-link:hover {
-      color: #1e40af;
-      text-decoration: underline;
-    }
-    a.ext-link:visited {
-      color: #5b21b6;
-    }
+    a.ext-link:hover { color: #1e40af; }
+    a.ext-link:visited { color: #5b21b6; }
     .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     .opp.high { border-left-color: #f59e0b; }
@@ -103,7 +99,7 @@
         <button class="secondary" id="installBtn">Install App</button>
         <a class="btn premium" href="/premium.html">Premium</a>
       </div>
-      <div style="margin-top:12px; font-size:14px;">
+      <div style="margin-top:14px; font-size:15px;">
         <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer">My Profile</a>
         <a class="ext-link" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer">Venmo QR</a>
         <a class="ext-link" href="https://cash.app" target="_blank" rel="noopener noreferrer">Cash App</a>
@@ -134,6 +130,15 @@
 
     let lastResults = [];
     let deferredPrompt = null;
+
+    // Force all external links to open reliably
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="http"]');
+      if (a) {
+        e.preventDefault();
+        window.open(a.href, '_blank', 'noopener,noreferrer');
+      }
+    });
 
     function doInstall() {
       if (deferredPrompt) {
