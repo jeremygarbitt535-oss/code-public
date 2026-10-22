@@ -8,11 +8,11 @@ require('dotenv').config();
 const PREMIUM_URL = process.env.PREMIUM_URL || 'https://buy.stripe.com/test_5kQ6oIebw51vgdT8CC2ZO00';
 const FREE_SCANS_PER_DAY = 3;
 const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret';
-const ALERT_WEBHOOK = process.env.ALERT_WEBHOOK || ''; // Telegram bot URL or any webhook
+const ALERT_WEBHOOK = process.env.ALERT_WEBHOOK || '';
 const ALERT_THRESHOLD = Number(process.env.ALERT_THRESHOLD) || 1.0;
 
 const scanCounts = new Map();
-const recentResults = []; // last 50 scans
+const recentResults = [];
 
 function getClientKey(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
@@ -47,19 +47,29 @@ function storeResult(result) {
 
 async function sendAlert(opportunities) {
   const high = opportunities.filter(o => o.net >= ALERT_THRESHOLD);
-  if (!high.length) return;
-  const text = high.map(o => `${o.name}: +$${o.net}`).join('\n');
-  console.log('ALERT:', text);
-  if (ALERT_WEBHOOK) {
-    try {
+  if (!high.length || !ALERT_WEBHOOK) return;
+
+  const text = high.map(o => `${o.name}: +$${o.net.toFixed(2)}`).join('\n');
+  const fullText = `Venmo Arbitrageur alert:\n${text}`;
+
+  console.log('ALERT:', fullText);
+
+  try {
+    if (ALERT_WEBHOOK.includes('api.telegram.org')) {
+      // Telegram style: URL already contains token + chat_id or we append text
+      const url = ALERT_WEBHOOK.includes('?')
+        ? `${ALERT_WEBHOOK}&text=${encodeURIComponent(fullText)}`
+        : `${ALERT_WEBHOOK}?text=${encodeURIComponent(fullText)}`;
+      await fetch(url);
+    } else {
       await fetch(ALERT_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: `Venmo Arbitrageur alert:\n${text}` }),
+        body: JSON.stringify({ text: fullText, opportunities: high }),
       });
-    } catch (e) {
-      console.error('Alert webhook failed:', e.message);
     }
+  } catch (e) {
+    console.error('Alert webhook failed:', e.message);
   }
 }
 
@@ -131,9 +141,11 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
-    version: '1.3.0',
+    version: '1.4.0',
     freeScansPerDay: FREE_SCANS_PER_DAY,
     recentScans: recentResults.length,
+    alertsEnabled: !!ALERT_WEBHOOK,
+    alertThreshold: ALERT_THRESHOLD,
   });
 });
 
@@ -207,7 +219,6 @@ app.post('/scan', async (req, res) => {
   }
 });
 
-// Scheduled / cron scan (bypass free limit, protected by secret)
 app.post('/cron/scan', async (req, res) => {
   if (req.headers['x-cron-secret'] !== CRON_SECRET && req.query.secret !== CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -269,6 +280,7 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Premium link: ${PREMIUM_URL}`);
   console.log(`Free scans/day: ${FREE_SCANS_PER_DAY}`);
   console.log(`Alert threshold: $${ALERT_THRESHOLD}`);
+  console.log(`Alerts enabled: ${!!ALERT_WEBHOOK}`);
 });
 
 process.on('SIGTERM', () => {
