@@ -19,29 +19,16 @@
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      margin: 0; padding: 0;
-      background: #0f172a; color: #e2e8f0;
-      line-height: 1.5; -webkit-font-smoothing: antialiased;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #0f172a; color: #e2e8f0; line-height: 1.5; -webkit-font-smoothing: antialiased; }
     .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; position: relative; }
     .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
     h1 { margin: 0; font-size: 26px; font-weight: 650; }
     .sub { color: #94a3b8; margin: 0 0 20px; font-size: 15px; }
-    .avatar {
-      width: 44px; height: 44px; border-radius: 50%; background: #3d95ce; color: white;
-      font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center;
-      text-decoration: none; flex-shrink: 0; margin-left: 12px; cursor: pointer; border: 2px solid #60a5fa;
-    }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; background: #3d95ce; color: white; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; text-decoration: none; flex-shrink: 0; margin-left: 12px; cursor: pointer; border: 2px solid #60a5fa; }
     .avatar:hover { background: #2e7bb0; }
     .card { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 14px; border: 1px solid #334155; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    button, a.btn {
-      background: #3b82f6; color: white; border: none; padding: 10px 16px;
-      border-radius: 10px; font-size: 15px; cursor: pointer; text-decoration: none;
-      display: inline-flex; align-items: center; justify-content: center; transition: background .15s;
-    }
+    button, a.btn { background: #3b82f6; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 15px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: background .15s; }
     button:active, a.btn:active { transform: scale(.98); }
     button:hover, a.btn:hover { background: #2563eb; }
     button.secondary, a.secondary { background: #475569; }
@@ -52,10 +39,7 @@
     button.cashapp, a.cashapp { background: #00d632; color: #000; }
     button.cashapp:hover, a.cashapp:hover { background: #00b82b; }
     button:disabled { opacity: .6; cursor: not-allowed; }
-    a.ext-link {
-      color: #60a5fa; text-decoration: underline; text-underline-offset: 2px;
-      font-weight: 500; font-size: 15px; margin: 0 10px 0 0; cursor: pointer; padding: 2px 0;
-    }
+    a.ext-link { color: #60a5fa; text-decoration: underline; text-underline-offset: 2px; font-weight: 500; font-size: 15px; margin: 0 10px 0 0; cursor: pointer; padding: 2px 0; }
     a.ext-link:hover { color: #93c5fd; }
     .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -68,10 +52,7 @@
     #scans { font-size: 14px; color: #fbbf24; margin-top: 6px; }
     #stats { font-size: 13px; color: #94a3b8; margin-top: 4px; }
     input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px 12px; border-radius: 10px; font-size: 15px; }
-    .upgrade-banner, .install-banner {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      border: 1px solid #22c55e; border-radius: 14px; padding: 16px; margin-bottom: 14px; text-align: center;
-    }
+    .upgrade-banner, .install-banner { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #22c55e; border-radius: 14px; padding: 16px; margin-bottom: 14px; text-align: center; }
     .install-banner { border-color: #3b82f6; }
     .skeleton { height: 72px; background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 10px; margin: 8px 0; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
@@ -84,13 +65,14 @@
     .compare ul { margin: 0; padding-left: 16px; }
     .log { font-size: 13px; color: #94a3b8; max-height: 120px; overflow-y: auto; }
     .log div { padding: 4px 0; border-bottom: 1px solid #334155; }
+    .premium-badge { background: #22c55e; color: #0f172a; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header-row">
       <div>
-        <h1>Venmo Arbitrageur</h1>
+        <h1>Venmo Arbitrageur <span id="premiumBadge" class="premium-badge" style="display:none;">Premium</span></h1>
         <p class="sub">Scan opportunities and net yield</p>
       </div>
       <a class="avatar" href="https://venmo.com/u/Jeremy-Garbitt-1" target="_blank" rel="noopener noreferrer" title="My Venmo Profile">JG</a>
@@ -111,20 +93,11 @@
       <div class="compare" style="margin-top:10px;">
         <div>
           <h3>Free</h3>
-          <ul>
-            <li>Limited scans / day</li>
-            <li>Basic opportunities</li>
-            <li>No alerts</li>
-          </ul>
+          <ul><li>Limited scans / day</li><li>Basic opportunities</li><li>No alerts</li></ul>
         </div>
         <div class="paid">
           <h3>Premium</h3>
-          <ul>
-            <li>Unlimited scans</li>
-            <li>Higher-yield windows</li>
-            <li>Daily alerts (Telegram / Discord)</li>
-            <li>$19 one-time or $49 lifetime</li>
-          </ul>
+          <ul><li>Unlimited scans</li><li>Higher-yield windows</li><li>Daily alerts</li><li>$19 / $49 / $199</li></ul>
         </div>
       </div>
       <div class="row" style="margin-top:12px;">
@@ -150,7 +123,6 @@
       <strong>Free scans used for today.</strong><br>
       <span id="bannerCountdown" style="color:#94a3b8;font-size:14px;"></span><br>
       <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock — $19</a>
-      <a class="btn premium" href="/premium.html?plan=lifetime" style="margin-top:10px;margin-left:6px;">Lifetime $49</a>
     </div>
 
     <div class="card">
@@ -204,9 +176,39 @@
     const activityLog = document.getElementById('activityLog');
     const shareBtn = document.getElementById('shareBtn');
     const shareStatus = document.getElementById('shareStatus');
+    const premiumBadge = document.getElementById('premiumBadge');
 
     let lastResults = [];
     let deferredPrompt = null;
+    let premiumCode = localStorage.getItem('premiumCode') || '';
+
+    // Capture premium code from URL (?premium=CODE) after Stripe success
+    const params = new URLSearchParams(location.search);
+    if (params.get('premium')) {
+      premiumCode = params.get('premium');
+      localStorage.setItem('premiumCode', premiumCode);
+      history.replaceState({}, '', location.pathname);
+    }
+
+    function premiumHeaders() {
+      const h = { 'Content-Type': 'application/json' };
+      if (premiumCode) h['X-Premium-Code'] = premiumCode;
+      return h;
+    }
+
+    async function checkPremium() {
+      if (!premiumCode) return;
+      try {
+        const res = await fetch('/premium-status?code=' + encodeURIComponent(premiumCode));
+        const data = await res.json();
+        if (data.premium) {
+          premiumBadge.style.display = 'inline';
+          upgradeBanner.style.display = 'none';
+          statusEl.textContent = 'Premium active · unlimited scans';
+        }
+      } catch (_) {}
+    }
+    checkPremium();
 
     document.addEventListener('click', (e) => {
       const a = e.target.closest('a[href^="http"]');
@@ -228,8 +230,7 @@
         });
       } else {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) alert('To install: tap the Share button, then "Add to Home Screen".');
-        else alert('To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
+        alert(isIOS ? 'To install: tap the Share button, then "Add to Home Screen".' : 'To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
       }
     }
 
@@ -238,7 +239,6 @@
       deferredPrompt = e;
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         installBanner.style.display = 'block';
-        installHint.textContent = 'Add to your home screen for one-tap access.';
       }
     });
 
@@ -265,18 +265,23 @@
       return Math.ceil((t - now) / 3600000);
     }
     function updateCountdown() {
-      const h = hoursUntilReset();
-      if (bannerCountdown) bannerCountdown.textContent = `Resets in ~${h}h`;
+      if (bannerCountdown) bannerCountdown.textContent = `Resets in ~${hoursUntilReset()}h`;
     }
     updateCountdown();
     setInterval(updateCountdown, 60000);
 
     async function updateScans() {
       try {
-        const res = await fetch('/scans-remaining');
+        const res = await fetch('/scans-remaining', { headers: premiumCode ? { 'X-Premium-Code': premiumCode } : {} });
         const data = await res.json();
-        scansEl.textContent = `Free scans left: ${data.remaining} / ${data.limit}`;
-        if (data.remaining === 0) upgradeBanner.style.display = 'block';
+        if (data.premium) {
+          scansEl.textContent = 'Premium · unlimited scans';
+          premiumBadge.style.display = 'inline';
+          upgradeBanner.style.display = 'none';
+        } else {
+          scansEl.textContent = `Free scans left: ${data.remaining} / ${data.limit}`;
+          if (data.remaining === 0) upgradeBanner.style.display = 'block';
+        }
       } catch (_) {}
     }
     updateScans();
@@ -325,12 +330,9 @@
         shareStatus.textContent = 'Copied!';
         setTimeout(() => shareStatus.textContent = '', 2000);
         addLog('Share link copied');
-      } catch (_) {
-        shareStatus.textContent = 'Copy failed';
-      }
+      } catch (_) { shareStatus.textContent = 'Copy failed'; }
     };
 
-    const params = new URLSearchParams(location.search);
     if (params.get('ref')) {
       localStorage.setItem('bonusScan', '1');
       addLog('Referral bonus applied (+1 scan)');
@@ -343,7 +345,7 @@
       ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === 'connected') {
-          statusEl.textContent = msg.plaid ? 'Ready · Plaid connected' : 'Ready · demo mode';
+          statusEl.textContent = premiumCode ? 'Premium active' : (msg.plaid ? 'Ready · Plaid connected' : 'Ready · demo mode');
         } else if (msg.type === 'opportunity') {
           renderOpp(msg.data);
         }
@@ -406,8 +408,8 @@
       try {
         const res = await fetch('/scan', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accessToken: token || undefined }),
+          headers: premiumHeaders(),
+          body: JSON.stringify({ accessToken: token || undefined, premiumCode }),
         });
         const data = await res.json();
         resultsEl.innerHTML = '';
@@ -415,9 +417,13 @@
           upgradeBanner.style.display = 'block';
           scansEl.textContent = 'Free scans left: 0';
           resultsEl.innerHTML = `<div class="card">${data.message || 'Free limit reached.'} <a href="/premium.html" style="color:#22c55e;">Unlock</a></div>`;
-          renderOpp({ id: 'locked', name: 'Higher Yield Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'This opportunity is visible with Premium. Unlock to see full details and act on it.' }, true);
+          renderOpp({ id: 'locked', name: 'Higher Yield Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Unlock Premium to see full details.' }, true);
           addLog('Free limit reached');
           return;
+        }
+        if (data.premium) {
+          premiumBadge.style.display = 'inline';
+          upgradeBanner.style.display = 'none';
         }
         if (data.yields) {
           const filtered = data.yields.filter(o => o.net >= min);
@@ -432,14 +438,16 @@
           } else {
             filtered.forEach(o => renderOpp(o));
           }
-          renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+          if (!data.premium) {
+            renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+          }
           addLog(`Scan complete · ${filtered.length} opportunities`);
         }
         if (data.scansRemaining !== undefined) {
-          scansEl.textContent = `Free scans left: ${data.scansRemaining}`;
-          if (data.scansRemaining === 0) upgradeBanner.style.display = 'block';
+          scansEl.textContent = data.premium ? 'Premium · unlimited scans' : `Free scans left: ${data.scansRemaining}`;
+          if (!data.premium && data.scansRemaining === 0) upgradeBanner.style.display = 'block';
         }
-        statusEl.textContent = `Done · ${data.yields?.length || 0} found`;
+        statusEl.textContent = data.premium ? 'Premium · Done' : `Done · ${data.yields?.length || 0} found`;
       } catch (err) {
         resultsEl.innerHTML = '<div class="card">Scan failed. Try again.</div>';
         statusEl.textContent = 'Error';
@@ -458,9 +466,7 @@
         const data = await res.json();
         statusEl.textContent = data.error ? 'Balance error' : `Available: $${(data.available || 0).toFixed(2)}`;
         addLog('Balance checked');
-      } catch (_) {
-        statusEl.textContent = 'Balance failed';
-      }
+      } catch (_) { statusEl.textContent = 'Balance failed'; }
     }
 
     function exportCSV() {
