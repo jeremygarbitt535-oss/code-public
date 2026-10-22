@@ -2,11 +2,285 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/">
-  <script>window.location.replace('https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/');</script>
-  <title>Redirecting…</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Venmo Arbitrageur</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Arbitrageur">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
+    h1 { margin: 0 0 4px; font-size: 26px; font-weight: 650; }
+    .sub { color: #94a3b8; margin: 0 0 20px; font-size: 15px; }
+    .card {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 1px solid #334155;
+    }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button, a.btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+    }
+    button:active, a.btn:active { transform: scale(.98); }
+    button:hover, a.btn:hover { background: #2563eb; }
+    button.secondary, a.secondary { background: #475569; }
+    button.premium, a.premium { background: #22c55e; }
+    button.premium:hover, a.premium:hover { background: #16a34a; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .opp {
+      background: #0f172a;
+      border-left: 4px solid #22c55e;
+      padding: 12px 14px;
+      margin: 8px 0;
+      border-radius: 10px;
+      animation: fadeIn .25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .opp.high { border-left-color: #f59e0b; }
+    .opp.locked { border-left-color: #64748b; opacity: .75; }
+    .yield { font-size: 18px; font-weight: 650; color: #22c55e; }
+    .meta { font-size: 13px; color: #94a3b8; margin-top: 2px; }
+    #status { font-size: 13px; color: #64748b; min-height: 18px; }
+    #scans { font-size: 14px; color: #fbbf24; margin-top: 6px; }
+    input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+    .upgrade-banner {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid #22c55e;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .skeleton {
+      height: 72px;
+      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+      border-radius: 10px;
+      margin: 8px 0;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  </style>
 </head>
 <body>
-  <p>Redirecting to the full app… <a href="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/">Click here</a> if you are not redirected.</p>
+  <div class="container">
+    <h1>Venmo Arbitrageur</h1>
+    <p class="sub">Scan opportunities and net yield</p>
+
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
+      <strong>Free scans used for today.</strong><br>
+      <span id="bannerCountdown" style="color:#94a3b8;font-size:14px;"></span><br>
+      <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock Unlimited — $19</a>
+    </div>
+
+    <div class="card">
+      <div id="status">Connecting…</div>
+      <div id="scans"></div>
+      <div class="row" style="margin-top:12px;">
+        <button id="scan">Scan</button>
+        <button class="secondary" id="balance">Balance</button>
+        <button class="secondary" id="export">Export</button>
+        <a class="btn premium" href="/premium.html">Premium</a>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label style="font-size:14px;color:#94a3b8;">Min $</label>
+        <input type="number" id="threshold" step="0.1" min="0" value="0.5" style="width:80px;">
+        <input id="token" placeholder="Plaid token (optional)" style="flex:1;min-width:160px;">
+      </div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const scansEl = document.getElementById('scans');
+    const resultsEl = document.getElementById('results');
+    const tokenEl = document.getElementById('token');
+    const thresholdEl = document.getElementById('threshold');
+    const upgradeBanner = document.getElementById('upgradeBanner');
+    const bannerCountdown = document.getElementById('bannerCountdown');
+    const scanBtn = document.getElementById('scan');
+
+    let lastResults = [];
+
+    const saved = localStorage.getItem('yieldThreshold');
+    if (saved) thresholdEl.value = saved;
+    thresholdEl.onchange = () => localStorage.setItem('yieldThreshold', thresholdEl.value);
+
+    function hoursUntilReset() {
+      const now = new Date();
+      const t = new Date(now); t.setUTCDate(t.getUTCDate() + 1); t.setUTCHours(0,0,0,0);
+      return Math.ceil((t - now) / 3600000);
+    }
+    function updateCountdown() {
+      const h = hoursUntilReset();
+      const text = `Resets in ~${h}h`;
+      if (bannerCountdown) bannerCountdown.textContent = text;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+
+    async function updateScans() {
+      try {
+        const res = await fetch('/scans-remaining');
+        const data = await res.json();
+        scansEl.textContent = `Free scans left: ${data.remaining} / ${data.limit}`;
+        if (data.remaining === 0) upgradeBanner.style.display = 'block';
+      } catch (_) {}
+    }
+    updateScans();
+
+    let ws;
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'connected') {
+          statusEl.textContent = msg.plaid ? 'Ready · Plaid connected' : 'Ready · demo mode';
+        } else if (msg.type === 'opportunity') {
+          renderOpp(msg.data);
+        }
+      };
+      ws.onclose = () => setTimeout(connect, 1500);
+    }
+    connect();
+
+    function renderOpp(opp, locked = false) {
+      const div = document.createElement('div');
+      div.className = 'opp' + (opp.riskLevel === 'High' ? ' high' : '') + (locked ? ' locked' : '');
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <strong>${opp.name || opp.id}</strong>
+          <span class="yield">+$${Number(opp.net).toFixed(2)}</span>
+        </div>
+        <div class="meta">${opp.method || ''} · ${opp.riskLevel || ''} risk</div>
+        <div style="margin-top:6px;font-size:14px;color:#cbd5e1;">${opp.description || ''}</div>
+        ${locked ? '<div style="margin-top:8px;"><a href="/premium.html" style="color:#22c55e;font-size:13px;">Unlock to view</a></div>' : `
+          <div style="margin-top:8px;">
+            <button style="padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Simulate</button>
+          </div>`}
+      `;
+      resultsEl.prepend(div);
+    }
+
+    function showSkeleton() {
+      resultsEl.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+    }
+
+    async function scan() {
+      scanBtn.disabled = true;
+      scanBtn.textContent = 'Scanning…';
+      showSkeleton();
+      lastResults = [];
+      const token = tokenEl.value.trim();
+      const min = parseFloat(thresholdEl.value) || 0;
+      try {
+        const res = await fetch('/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken: token || undefined }),
+        });
+        const data = await res.json();
+        resultsEl.innerHTML = '';
+        if (res.status === 402) {
+          upgradeBanner.style.display = 'block';
+          scansEl.textContent = 'Free scans left: 0';
+          resultsEl.innerHTML = `<div class="card">${data.message || 'Free limit reached.'} <a href="/premium.html" style="color:#22c55e;">Unlock</a></div>`;
+          renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+          return;
+        }
+        if (data.yields) {
+          const filtered = data.yields.filter(o => o.net >= min);
+          lastResults = filtered;
+          if (!filtered.length) {
+            resultsEl.innerHTML = '<div class="card">No opportunities above your minimum.</div>';
+          } else {
+            filtered.forEach(o => renderOpp(o));
+          }
+          renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+        }
+        if (data.scansRemaining !== undefined) {
+          scansEl.textContent = `Free scans left: ${data.scansRemaining}`;
+          if (data.scansRemaining === 0) upgradeBanner.style.display = 'block';
+        }
+        statusEl.textContent = `Done · ${data.yields?.length || 0} found`;
+      } catch (err) {
+        resultsEl.innerHTML = '<div class="card">Scan failed. Try again.</div>';
+        statusEl.textContent = 'Error';
+      } finally {
+        scanBtn.disabled = false;
+        scanBtn.textContent = 'Scan';
+      }
+    }
+
+    async function checkBalance() {
+      const token = tokenEl.value.trim();
+      statusEl.textContent = 'Checking balance…';
+      try {
+        const res = await fetch('/balance' + (token ? '?accessToken=' + encodeURIComponent(token) : ''));
+        const data = await res.json();
+        statusEl.textContent = data.error ? 'Balance error' : `Available: $${(data.available || 0).toFixed(2)}`;
+      } catch (_) {
+        statusEl.textContent = 'Balance failed';
+      }
+    }
+
+    function exportCSV() {
+      if (!lastResults.length) { alert('Scan first'); return; }
+      const rows = lastResults.map(o => [o.name || o.id, o.method, o.net, o.riskLevel].join(','));
+      const csv = ['Name,Method,Net,Risk', ...rows].join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'opportunities.csv';
+      a.click();
+    }
+
+    window.execute = async (id) => {
+      const res = await fetch('/execute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ opportunityId: id }) });
+      const data = await res.json();
+      alert(data.message || 'Recorded');
+    };
+
+    document.getElementById('scan').onclick = scan;
+    document.getElementById('balance').onclick = checkBalance;
+    document.getElementById('export').onclick = exportCSV;
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  </script>
 </body>
 </html>
