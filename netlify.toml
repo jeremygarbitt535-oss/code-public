@@ -4,5 +4,5 @@
 [[redirects]]
   from = "/*"
   to = "https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/:splat"
-  status = 200
+  status = 302
   force = true
