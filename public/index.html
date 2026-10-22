@@ -8,21 +8,21 @@
   <meta name="description" content="Free scanner for Venmo and Cash App cashback, referral bonuses, and fee arbitrage. Find high-yield opportunities daily. Unlock unlimited scans with Premium.">
   <meta name="keywords" content="Venmo cashback, Cash App referral, Venmo fee arbitrage, Cash App cashback, Venmo bonus, payment arbitrage, yield opportunities">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://payment-arbitrator.vercel.app/">
+  <link rel="canonical" href="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://payment-arbitrator.vercel.app/">
+  <meta property="og:url" content="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/">
   <meta property="og:title" content="Venmo Arbitrageur | Find Cashback & Referral Opportunities">
   <meta property="og:description" content="Scan Venmo and Cash App for cashback, referrals, and fee-arbitrage windows. Free daily scans or go unlimited with Premium.">
-  <meta property="og:image" content="https://payment-arbitrator.vercel.app/icon-512.svg">
+  <meta property="og:image" content="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/icon-512.svg">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://payment-arbitrator.vercel.app/">
+  <meta property="twitter:url" content="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/">
   <meta property="twitter:title" content="Venmo Arbitrageur | Find Cashback & Referral Opportunities">
   <meta property="twitter:description" content="Scan Venmo and Cash App for cashback, referrals, and fee-arbitrage windows.">
-  <meta property="twitter:image" content="https://payment-arbitrator.vercel.app/icon-512.svg">
+  <meta property="twitter:image" content="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/icon-512.svg">
 
   <!-- Structured Data -->
   <script type="application/ld+json">
@@ -38,7 +38,7 @@
       "priceCurrency": "USD"
     },
     "description": "Scan Venmo and Cash App for cashback, referral bonuses, and fee arbitrage opportunities.",
-    "url": "https://payment-arbitrator.vercel.app/"
+    "url": "https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/"
   }
   </script>
 
@@ -84,7 +84,7 @@
     #status { font-size: 13px; color: #64748b; min-height: 18px; }
     #scans { font-size: 14px; color: #fbbf24; margin-top: 6px; }
     #stats { font-size: 13px; color: #94a3b8; margin-top: 4px; }
-    input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px 12px; border-radius: 10px; font-size: 15px; }
+    input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 10px 12px; border-radius: 10px; font-size: 15px; width: 100%; max-width: 280px; }
     .upgrade-banner, .install-banner { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #22c55e; border-radius: 14px; padding: 16px; margin-bottom: 14px; text-align: center; }
     .install-banner { border-color: #3b82f6; }
     .skeleton { height: 72px; background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 10px; margin: 8px 0; }
@@ -101,6 +101,8 @@
     .premium-badge { background: #22c55e; color: #0f172a; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
     .seo-content { margin-top: 32px; font-size: 14px; color: #cbd5e1; }
     .seo-content ul { padding-left: 20px; }
+    .email-form { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+    .email-form button { background: #22c55e; }
   </style>
 </head>
 <body>
@@ -108,9 +110,19 @@
     <div class="header-row">
       <div>
         <h1>Venmo Arbitrageur <span id="premiumBadge" class="premium-badge" style="display:none;">Premium</span></h1>
-        <p class="sub">Find cashback, referral, and fee-arbitrage windows on Venmo & Cash App. Free daily scans or go unlimited.</p>
+        <p class="sub">Stop missing free cashback and referral bonuses on Venmo & Cash App. Scan daily — free users get 3 scans, Premium unlocks unlimited + alerts.</p>
       </div>
       <a class="avatar" href="https://venmo.com/u/Auroraopportunities" target="_blank" rel="noopener noreferrer" title="My Venmo Profile">AO</a>
+    </div>
+
+    <div class="upgrade-banner">
+      <strong>Get tomorrow’s free opportunity alert</strong>
+      <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Drop your email and we’ll send the top yield windows. No spam.</p>
+      <form class="email-form" id="emailForm">
+        <input type="email" id="emailInput" placeholder="your@email.com" required>
+        <button type="submit">Send me alerts</button>
+      </form>
+      <p id="emailStatus" style="margin:8px 0 0;font-size:13px;color:#86efac;"></p>
     </div>
 
     <div class="card">
@@ -131,9 +143,9 @@
         <li>Scan for active cashback and referral offers</li>
         <li>Identify fee arbitrage windows (standard vs instant transfers)</li>
         <li>Get timing-based yield opportunities</li>
-        <li>Free tier: limited daily scans · Premium: unlimited + alerts</li>
+        <li>Free tier: 3 scans per day · Premium: unlimited + alerts + export</li>
       </ul>
-      <p>This tool is a scanner and calculator. Always verify offers directly in the Venmo or Cash App apps before acting.</p>
+      <p>This tool is a scanner and calculator. Always verify offers directly in the Venmo or Cash App apps before acting. Ready to stop missing money? <a href="/premium.html" style="color:#60a5fa;">Unlock Premium</a>.</p>
     </div>
 
 <!--Start of Tawk.to Script-->
@@ -149,6 +161,27 @@ s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
 <!--End of Tawk.to Script-->
+
+<script>
+document.getElementById('emailForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('emailInput').value;
+  const status = document.getElementById('emailStatus');
+  status.textContent = 'Sending...';
+  try {
+    const res = await fetch('/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    status.textContent = data.ok ? 'You\u2019re in! Check your inbox soon.' : (data.error || 'Something went wrong');
+    if (data.ok) document.getElementById('emailInput').value = '';
+  } catch {
+    status.textContent = 'Network error — try again';
+  }
+});
+</script>
 
   </div>
 </body>
