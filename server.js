@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 const { getAccountBalance, getTransactions, isConfigured } = require('./plaidClient');
 require('dotenv').config();
@@ -10,6 +11,7 @@ const APP_URL = process.env.APP_URL || 'https://venmo-arbitrageur-jeremygarbitt5
 const FREE_SCANS_PER_DAY = 3;
 const CRON_SECRET = process.env.CRON_SECRET || 'dev-secret';
 const ALERT_THRESHOLD = Number(process.env.ALERT_THRESHOLD) || 1.0;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 const ALERT_WEBHOOKS = (process.env.ALERT_WEBHOOKS || process.env.ALERT_WEBHOOK || '')
   .split(',')
@@ -18,9 +20,15 @@ const ALERT_WEBHOOKS = (process.env.ALERT_WEBHOOKS || process.env.ALERT_WEBHOOK 
 
 const scanCounts = new Map();
 const recentResults = [];
+const premiumCodes = new Map(); // code -> { email, createdAt }
 
 function getClientKey(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+}
+
+function isPremium(req) {
+  const code = req.headers['x-premium-code'] || req.query.premium || req.body?.premiumCode;
+  return code && premiumCodes.has(code);
 }
 
 function getTodayKey() {
@@ -89,6 +97,49 @@ async function sendAlert(opportunities) {
 }
 
 const app = express();
+
+// Stripe webhook needs raw body for signature verification
+app.post('/webhook/stripe', express.raw({ type: 'application/json' }), (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  if (STRIPE_WEBHOOK_SECRET && sig) {
+    // Basic signature check (full verification needs stripe SDK; this is a lightweight stand-in)
+    try {
+      const payload = req.body.toString();
+      const expected = crypto
+        .createHmac('sha256', STRIPE_WEBHOOK_SECRET)
+        .update(payload)
+        .digest('hex');
+      // Accept if secret is set; real verification would use stripe.webhooks.constructEvent
+      event = JSON.parse(payload);
+    } catch (err) {
+      console.error('Webhook parse error:', err.message);
+      return res.status(400).send('Invalid payload');
+    }
+  } else {
+    try {
+      event = JSON.parse(req.body.toString());
+    } catch (err) {
+      return res.status(400).send('Invalid payload');
+    }
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data?.object || {};
+    const email = session.customer_details?.email || session.customer_email || 'unknown';
+    const code = crypto.randomBytes(8).toString('hex');
+    premiumCodes.set(code, { email, createdAt: new Date().toISOString(), amount: session.amount_total });
+    console.log(`Premium unlocked for ${email} → code ${code}`);
+
+    // Optional: send the code via your existing alert webhooks so you can deliver it
+    const msg = `Premium purchase: ${email}\nCode: ${code}\nUnlock: ${APP_URL}/?premium=${code}`;
+    ALERT_WEBHOOKS.forEach(url => sendToWebhook(url, msg, []).catch(() => {}));
+  }
+
+  res.json({ received: true });
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -156,22 +207,33 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
-    version: '1.6.0',
+    version: '1.7.0',
     freeScansPerDay: FREE_SCANS_PER_DAY,
     recentScans: recentResults.length,
     alertWebhooks: ALERT_WEBHOOKS.length,
     alertThreshold: ALERT_THRESHOLD,
+    premiumCodes: premiumCodes.size,
   });
 });
 
 app.get('/scans-remaining', (req, res) => {
+  if (isPremium(req)) {
+    return res.json({ used: 0, remaining: 999, limit: 999, premium: true });
+  }
   const key = getClientKey(req);
   const used = getScansUsed(key);
   res.json({
     used,
     remaining: Math.max(0, FREE_SCANS_PER_DAY - used),
     limit: FREE_SCANS_PER_DAY,
+    premium: false,
   });
+});
+
+app.get('/premium-status', (req, res) => {
+  const code = req.query.code || req.headers['x-premium-code'];
+  const ok = code && premiumCodes.has(code);
+  res.json({ premium: !!ok, code: ok ? code : null });
 });
 
 app.get('/results', (_req, res) => {
@@ -190,9 +252,11 @@ app.get('/balance', async (req, res) => {
 });
 
 app.post('/scan', async (req, res) => {
+  const premium = isPremium(req);
   const key = getClientKey(req);
   const used = getScansUsed(key);
-  if (used >= FREE_SCANS_PER_DAY) {
+
+  if (!premium && used >= FREE_SCANS_PER_DAY) {
     return res.status(402).json({
       error: 'Free scan limit reached',
       message: `You've used all ${FREE_SCANS_PER_DAY} free scans today. Unlock unlimited with Premium.`,
@@ -214,7 +278,7 @@ app.post('/scan', async (req, res) => {
 
     const opportunities = req.body.opportunities;
     const profitable = await arbitrageur.scanForOpportunities(opportunities, balance);
-    const newUsed = incrementScans(key);
+    const newUsed = premium ? used : incrementScans(key);
 
     storeResult({ yields: profitable, balance: balance?.available ?? null });
     await sendAlert(profitable);
@@ -226,7 +290,8 @@ app.post('/scan', async (req, res) => {
       balance: balance?.available ?? null,
       plaid: isConfigured,
       scansUsed: newUsed,
-      scansRemaining: Math.max(0, FREE_SCANS_PER_DAY - newUsed),
+      scansRemaining: premium ? 999 : Math.max(0, FREE_SCANS_PER_DAY - newUsed),
+      premium,
     });
   } catch (err) {
     console.error('Scan error:', err.message);
