@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venmo Arbitrageur</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    .sub { color: #94a3b8; margin-bottom: 24px; }
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #334155;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button:hover { background: #2563eb; }
+    button.secondary { background: #475569; }
+    .opp {
+      background: #0f172a;
+      border-left: 4px solid #22c55e;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+    }
+    .opp.high { border-left-color: #f59e0b; }
+    .yield { font-size: 20px; font-weight: 600; color: #22c55e; }
+    .meta { font-size: 13px; color: #94a3b8; }
+    #status { font-size: 13px; color: #64748b; }
+    input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Venmo Arbitrageur</h1>
+    <p class="sub">Opportunity scanner and net yield calculator</p>
+
+    <div class="card">
+      <div id="status">Connecting...</div>
+      <div style="margin-top: 12px;">
+        <button id="scan">Scan Opportunities</button>
+        <button class="secondary" id="balance">Check Balance</button>
+      </div>
+      <div style="margin-top: 12px;">
+        <input id="token" placeholder="Plaid access token (optional, uses demo if empty)" />
+      </div>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const tokenEl = document.getElementById('token');
+
+    let ws;
+    function connect() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'connected') {
+          statusEl.textContent = `Connected · Plaid ${msg.plaid ? 'configured' : 'demo mode'}`;
+        } else if (msg.type === 'opportunity') {
+          renderOpp(msg.data);
+        }
+      };
+      ws.onclose = () => {
+        statusEl.textContent = 'Disconnected — retrying...';
+        setTimeout(connect, 2000);
+      };
+    }
+    connect();
+
+    function renderOpp(opp) {
+      const div = document.createElement('div');
+      div.className = 'opp' + (opp.riskLevel === 'High' ? ' high' : '');
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <strong>${opp.name || opp.id}</strong>
+          <span class="yield">+$${opp.net.toFixed(2)}</span>
+        </div>
+        <div class="meta">${opp.method} · ${opp.riskLevel} risk · gross $${opp.gross.toFixed(2)}</div>
+        <div style="margin-top:6px;font-size:14px;">${opp.description || ''}</div>
+        <button style="margin-top:8px;padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Execute (sim)</button>
+      `;
+      resultsEl.prepend(div);
+    }
+
+    async function scan() {
+      resultsEl.innerHTML = '';
+      const token = tokenEl.value.trim();
+      const res = await fetch('/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: token || undefined }),
+      });
+      const data = await res.json();
+      if (data.yields) {
+        data.yields.forEach(renderOpp);
+        if (!data.yields.length) {
+          resultsEl.innerHTML = '<div class="card">No opportunities above threshold.</div>';
+        }
+      }
+      statusEl.textContent = `Scanned ${data.scanned || 0} · ${data.yields?.length || 0} profitable`;
+    }
+
+    async function checkBalance() {
+      const token = tokenEl.value.trim();
+      const res = await fetch('/balance' + (token ? '?accessToken=' + encodeURIComponent(token) : ''));
+      const data = await res.json();
+      statusEl.textContent = data.error
+        ? 'Balance error: ' + data.error
+        : `Available: $${(data.available || 0).toFixed(2)} (${data.source || 'unknown'})`;
+    }
+
+    window.execute = async (id) => {
+      const res = await fetch('/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opportunityId: id }),
+      });
+      const data = await res.json();
+      alert(data.message || 'Done');
+    };
+
+    document.getElementById('scan').onclick = scan;
+    document.getElementById('balance').onclick = checkBalance;
+  </script>
+</body>
+</html>
