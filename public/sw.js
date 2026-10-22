@@ -1,4 +1,4 @@
-const CACHE = 'arbitrageur-v1';
+const CACHE = 'arbitrageur-v2';
 const ASSETS = ['/', '/manifest.json', '/premium.html'];
 
 self.addEventListener('install', (e) => {
