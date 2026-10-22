@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: venmo-arbitrageur
+    runtime: docker
+    plan: free
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: PLAID_ENV
+        value: sandbox
+      - key: YIELD_THRESHOLD
+        value: 0.5
+    healthCheckPath: /health

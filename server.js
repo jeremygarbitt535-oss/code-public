@@ -9,6 +9,15 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Basic request logging
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms`);
+  });
+  next();
+});
+
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -145,6 +154,7 @@ app.get('/health', (_req, res) => {
     plaid: isConfigured,
     threshold: arbitrageur.threshold,
     timestamp: new Date().toISOString(),
+    version: '1.0.0',
   });
 });
 
@@ -154,6 +164,7 @@ app.get('/balance', async (req, res) => {
     const balance = await getAccountBalance(accessToken);
     res.json(balance);
   } catch (err) {
+    console.error('Balance error:', err.message);
     res.status(400).json({ error: err.message });
   }
 });
@@ -182,6 +193,7 @@ app.post('/scan', async (req, res) => {
       plaid: isConfigured,
     });
   } catch (err) {
+    console.error('Scan error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -200,6 +212,15 @@ app.post('/execute', async (req, res) => {
   });
 });
 
+// Monetization stub — ready for Stripe Checkout later
+app.get('/premium', (_req, res) => {
+  res.json({
+    status: 'coming_soon',
+    message: 'Premium scans and alerts available after Stripe connection.',
+    features: ['unlimited scans', 'real-time alerts', 'custom thresholds', 'export'],
+  });
+});
+
 app.get('/transactions', async (req, res) => {
   try {
     const accessToken = req.query.accessToken;
@@ -215,7 +236,13 @@ wss.on('connection', (ws) => {
 });
 
 const port = process.env.PORT || 3000;
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`Venmo Arbitrageur listening on ${port}`);
   console.log(`Plaid configured: ${isConfigured}`);
+  console.log(`Health: http://localhost:${port}/health`);
+});
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down');
+  server.close(() => process.exit(0));
 });
