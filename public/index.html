@@ -36,6 +36,8 @@
     button.premium:hover, a.premium:hover { background: #16a34a; }
     button.venmo, a.venmo { background: #3d95ce; }
     button.venmo:hover, a.venmo:hover { background: #2e7bb0; }
+    button.cashapp, a.cashapp { background: #00d632; color: #000; }
+    button.cashapp:hover, a.cashapp:hover { background: #00b82b; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     .opp { background: #0f172a; border-left: 4px solid #22c55e; padding: 12px 14px; margin: 8px 0; border-radius: 10px; animation: fadeIn .25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -80,6 +82,7 @@
         <button class="secondary" id="balance">Balance</button>
         <button class="secondary" id="export">Export</button>
         <a class="btn venmo" href="https://venmo.com" target="_blank" rel="noopener">Open Venmo</a>
+        <a class="btn cashapp" href="https://cash.app" target="_blank" rel="noopener">Open Cash App</a>
         <button class="secondary" id="installBtn">Install App</button>
         <a class="btn premium" href="/premium.html">Premium</a>
       </div>
@@ -208,6 +211,7 @@
           <div style="margin-top:8px;">
             <button style="padding:6px 12px;font-size:13px;" onclick="execute('${opp.id}')">Simulate</button>
             <a class="btn venmo" href="https://venmo.com" target="_blank" rel="noopener" style="padding:6px 12px;font-size:13px;margin-left:6px;">Venmo</a>
+            <a class="btn cashapp" href="https://cash.app" target="_blank" rel="noopener" style="padding:6px 12px;font-size:13px;margin-left:6px;">Cash App</a>
           </div>`}
       `;
       resultsEl.prepend(div);
