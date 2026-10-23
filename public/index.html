@@ -47,7 +47,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Arbitrageur">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" href="/icon-192.png" type="image/png">
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -103,6 +104,11 @@
     .seo-content ul { padding-left: 20px; }
     .email-form { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
     .email-form button { background: #22c55e; }
+    /* iPhone: keep content clear of the notch and home indicator, avoid zoom-on-focus, comfortable tap targets */
+    .container { padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: max(40px, env(safe-area-inset-bottom)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+    input { font-size: 16px; }
+    button, a.btn { min-height: 44px; -webkit-tap-highlight-color: transparent; }
+    .opp button { min-height: 36px; }
   </style>
 </head>
 <body>
@@ -115,14 +121,75 @@
       <a class="avatar" href="https://venmo.com/u/Auroraopportunities" target="_blank" rel="noopener noreferrer" title="My Venmo Profile">AO</a>
     </div>
 
+    <div class="install-banner" id="installBanner" style="display:none;">
+      <strong>Install the app</strong><br>
+      <span id="installHint" style="color:#94a3b8;font-size:14px;">Add to your home screen for one-tap access.</span><br>
+      <button id="installBannerBtn" class="premium" style="margin-top:10px;">Install App</button>
+    </div>
+
+    <div class="upgrade-banner" id="upgradeBanner" style="display:none;">
+      <strong>Free scans used for today.</strong><br>
+      <span id="bannerCountdown" style="color:#94a3b8;font-size:14px;"></span><br>
+      <a class="btn premium" href="/premium.html" style="margin-top:10px;">Unlock — $19</a>
+    </div>
+
+    <div class="card">
+      <div id="status">Connecting…</div>
+      <div id="scans"></div>
+      <div id="stats"></div>
+      <div class="row" style="margin-top:12px;">
+        <button id="scan">Scan</button>
+        <button class="secondary" id="balance">Balance</button>
+        <button class="secondary" id="export">Export</button>
+        <button class="secondary" id="installBtn">Install App</button>
+        <a class="btn premium" href="/premium.html">Premium</a>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <label for="threshold" style="font-size:14px;color:#94a3b8;">Min $</label>
+        <input type="number" id="threshold" inputmode="decimal" step="0.1" min="0" value="0.5" style="width:90px;">
+        <input id="token" placeholder="Plaid token (optional)" autocomplete="off" autocapitalize="off" style="flex:1;min-width:160px;">
+      </div>
+    </div>
+
+    <div id="results"></div>
+
+    <div class="card how">
+      <strong>How it works</strong>
+      <ol>
+        <li>Tap <strong>Scan</strong> to find current yield opportunities.</li>
+        <li>Filter by minimum dollar amount.</li>
+        <li>Review risk and net yield, then open Venmo or Cash App to act.</li>
+        <li>Free users get 3 scans per day. Premium unlocks unlimited scans and alerts.</li>
+      </ol>
+    </div>
+
     <div class="upgrade-banner">
       <strong>Get tomorrow’s free opportunity alert</strong>
       <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Drop your email and we’ll send the top yield windows. No spam.</p>
       <form class="email-form" id="emailForm">
-        <input type="email" id="emailInput" placeholder="your@email.com" required>
+        <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email" required>
         <button type="submit">Send me alerts</button>
       </form>
       <p id="emailStatus" style="margin:8px 0 0;font-size:13px;color:#86efac;"></p>
+    </div>
+
+    <div class="card">
+      <strong>Free vs Premium</strong>
+      <div class="compare" style="margin-top:10px;">
+        <div>
+          <h3>Free</h3>
+          <ul><li>3 scans / day</li><li>Basic opportunities</li><li>No alerts</li></ul>
+        </div>
+        <div class="paid">
+          <h3>Premium</h3>
+          <ul><li>Unlimited scans</li><li>Higher-yield windows</li><li>Daily alerts</li></ul>
+        </div>
+      </div>
+      <div style="margin-top:16px;text-align:center;">
+        <a class="btn premium" href="/premium.html" style="display:flex;width:100%;padding:14px 20px;font-size:17px;font-weight:700;border-radius:12px;">
+          Unlock Premium — Unlimited Scans
+        </a>
+      </div>
     </div>
 
     <div class="card">
@@ -130,11 +197,21 @@
       <p style="margin:6px 0 10px;font-size:14px;color:#94a3b8;">arbitrator opportunities · @Auroraopportunities</p>
       <div class="row">
         <a class="btn venmo" href="https://venmo.com/u/Auroraopportunities" target="_blank" rel="noopener">Open Venmo Profile</a>
-        <a class="btn secondary" href="https://venmo.com/u/Auroraopportunities" target="_blank" rel="noopener">Show QR</a>
+        <a class="btn cashapp" href="https://cash.app" target="_blank" rel="noopener">Open Cash App</a>
       </div>
     </div>
 
-    <!-- Main app content / JS would go here in full version -->
+    <div class="card">
+      <strong>Share & earn</strong>
+      <p style="margin:6px 0 10px;font-size:14px;color:#94a3b8;">Share the app. When a friend opens your link you both get +1 free scan.</p>
+      <button class="secondary" id="shareBtn">Share link</button>
+      <span id="shareStatus" style="font-size:13px;color:#22c55e;margin-left:8px;"></span>
+    </div>
+
+    <div class="card">
+      <strong>Activity</strong>
+      <div class="log" id="activityLog"></div>
+    </div>
 
     <div class="seo-content">
       <h2>How Venmo Arbitrageur Works</h2>
@@ -147,6 +224,7 @@
       </ul>
       <p>This tool is a scanner and calculator. Always verify offers directly in the Venmo or Cash App apps before acting. Ready to stop missing money? <a href="/premium.html" style="color:#60a5fa;">Unlock Premium</a>.</p>
     </div>
+  </div>
 
 <!--Start of Tawk.to Script-->
 <script type="text/javascript">
@@ -175,7 +253,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
       body: JSON.stringify({ email })
     });
     const data = await res.json();
-    status.textContent = data.ok ? 'You\u2019re in! Check your inbox soon.' : (data.error || 'Something went wrong');
+    status.textContent = data.ok ? 'You’re in! Check your inbox soon.' : (data.error || 'Something went wrong');
     if (data.ok) document.getElementById('emailInput').value = '';
   } catch {
     status.textContent = 'Network error — try again';
@@ -183,6 +261,390 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
 });
 </script>
 
-  </div>
+<script>
+  const PROFILE_URL = 'https://venmo.com/u/Auroraopportunities';
+  const statusEl = document.getElementById('status');
+  const scansEl = document.getElementById('scans');
+  const statsEl = document.getElementById('stats');
+  const resultsEl = document.getElementById('results');
+  const tokenEl = document.getElementById('token');
+  const thresholdEl = document.getElementById('threshold');
+  const upgradeBanner = document.getElementById('upgradeBanner');
+  const bannerCountdown = document.getElementById('bannerCountdown');
+  const scanBtn = document.getElementById('scan');
+  const installBanner = document.getElementById('installBanner');
+  const installBannerBtn = document.getElementById('installBannerBtn');
+  const installBtn = document.getElementById('installBtn');
+  const installHint = document.getElementById('installHint');
+  const activityLog = document.getElementById('activityLog');
+  const shareBtn = document.getElementById('shareBtn');
+  const shareStatus = document.getElementById('shareStatus');
+  const premiumBadge = document.getElementById('premiumBadge');
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  function store(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
+  function load(key) { try { return localStorage.getItem(key); } catch (_) { return null; } }
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  let lastResults = [];
+  let deferredPrompt = null;
+  let premiumCode = load('premiumCode') || '';
+
+  // Capture premium code from URL (?premium=CODE) after Stripe success
+  const params = new URLSearchParams(location.search);
+  if (params.get('premium')) {
+    premiumCode = params.get('premium');
+    store('premiumCode', premiumCode);
+    history.replaceState({}, '', location.pathname);
+  }
+
+  function premiumHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    if (premiumCode) h['X-Premium-Code'] = premiumCode;
+    return h;
+  }
+
+  function setPremiumUI() {
+    premiumBadge.style.display = 'inline';
+    upgradeBanner.style.display = 'none';
+  }
+
+  async function checkPremium() {
+    if (!premiumCode) return;
+    try {
+      const res = await fetch('/premium-status?code=' + encodeURIComponent(premiumCode));
+      const data = await res.json();
+      if (data.premium) {
+        setPremiumUI();
+        statusEl.textContent = 'Premium active · unlimited scans';
+      }
+    } catch (_) {}
+  }
+
+  // Open external links in a new tab (Safari / the Venmo app when installed to the home screen)
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="http"]');
+    if (a && !a.classList.contains('no-force')) {
+      e.preventDefault();
+      window.open(a.href, '_blank', 'noopener,noreferrer');
+    }
+  });
+
+  function doInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(({ outcome }) => {
+        if (outcome === 'accepted') {
+          installBanner.style.display = 'none';
+          installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      alert(isIOS ? 'To install: open this page in Safari, tap the Share button, then "Add to Home Screen".' : 'To install: open the browser menu and choose "Add to Home Screen" or "Install app".');
+    }
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isStandalone) installBanner.style.display = 'block';
+  });
+
+  installBannerBtn.onclick = doInstall;
+  installBtn.onclick = doInstall;
+
+  if (isStandalone) {
+    installBtn.style.display = 'none';
+    installBanner.style.display = 'none';
+  } else if (isIOS) {
+    installBanner.style.display = 'block';
+    installHint.textContent = 'In Safari, tap Share → Add to Home Screen.';
+    installBannerBtn.textContent = 'Show me how';
+  }
+
+  const savedThreshold = load('yieldThreshold');
+  if (savedThreshold) thresholdEl.value = savedThreshold;
+  thresholdEl.onchange = () => store('yieldThreshold', thresholdEl.value);
+
+  function hoursUntilReset() {
+    const now = new Date();
+    const t = new Date(now); t.setUTCDate(t.getUTCDate() + 1); t.setUTCHours(0, 0, 0, 0);
+    return Math.ceil((t - now) / 3600000);
+  }
+  function updateCountdown() {
+    bannerCountdown.textContent = `Resets in ~${hoursUntilReset()}h`;
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 60000);
+
+  async function updateScans() {
+    try {
+      const res = await fetch('/scans-remaining', { headers: premiumCode ? { 'X-Premium-Code': premiumCode } : {} });
+      const data = await res.json();
+      if (data.premium) {
+        scansEl.textContent = 'Premium · unlimited scans';
+        setPremiumUI();
+      } else {
+        scansEl.textContent = `Free scans left: ${data.remaining} / ${data.limit}`;
+        if (data.remaining === 0) upgradeBanner.style.display = 'block';
+      }
+    } catch (_) {}
+  }
+
+  function updateStats() {
+    const last = load('lastScanAt');
+    const count = Number(load('oppsToday') || 0);
+    let text = '';
+    if (last) {
+      const mins = Math.round((Date.now() - Number(last)) / 60000);
+      text += `Last scan: ${mins < 1 ? 'just now' : mins + 'm ago'}`;
+    }
+    if (count) text += (text ? ' · ' : '') + `${count} opportunities found today`;
+    statsEl.textContent = text;
+  }
+  updateStats();
+  setInterval(updateStats, 30000);
+
+  function addLog(msg) {
+    const el = document.createElement('div');
+    el.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+    activityLog.prepend(el);
+    while (activityLog.children.length > 20) activityLog.removeChild(activityLog.lastChild);
+    try {
+      const logs = JSON.parse(load('activityLog') || '[]');
+      logs.unshift({ t: Date.now(), m: msg });
+      store('activityLog', JSON.stringify(logs.slice(0, 20)));
+    } catch (_) {}
+  }
+  function loadLog() {
+    try {
+      const logs = JSON.parse(load('activityLog') || '[]');
+      logs.forEach((l) => {
+        const el = document.createElement('div');
+        el.textContent = new Date(l.t).toLocaleTimeString() + ' — ' + l.m;
+        activityLog.appendChild(el);
+      });
+    } catch (_) {}
+  }
+  loadLog();
+
+  shareBtn.onclick = async () => {
+    const url = location.origin + '/?ref=' + encodeURIComponent(load('refCode') || 'ao');
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Venmo Arbitrageur', text: 'Find Venmo & Cash App cashback and referral windows', url });
+        addLog('Share link sent');
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      shareStatus.textContent = 'Copied!';
+      setTimeout(() => (shareStatus.textContent = ''), 2000);
+      addLog('Share link copied');
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      shareStatus.textContent = 'Copy failed';
+    }
+  };
+
+  if (params.get('ref')) {
+    store('bonusScan', '1');
+    addLog('Referral bonus applied (+1 scan)');
+  }
+
+  function renderOpp(opp, locked = false) {
+    if (!locked && opp.id && resultsEl.querySelector(`[data-id="${CSS.escape(opp.id)}"]`)) return;
+    const div = document.createElement('div');
+    div.className = 'opp' + (opp.riskLevel === 'High' ? ' high' : '') + (locked ? ' locked' : '');
+    if (!locked) div.dataset.id = opp.id || '';
+    const blurStyle = locked ? 'filter:blur(3px);' : '';
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;${blurStyle}">
+        <strong>${esc(opp.name || opp.id)}</strong>
+        <span class="yield">+$${Number(opp.net).toFixed(2)}</span>
+      </div>
+      <div class="meta" style="${blurStyle}">${esc(opp.method)} · ${esc(opp.riskLevel)} risk</div>
+      <div style="margin-top:6px;font-size:14px;color:#cbd5e1;${blurStyle}">${esc(opp.description)}</div>
+      ${locked ? '<div style="margin-top:8px;position:relative;z-index:1;"><a href="/premium.html" style="color:#22c55e;font-size:13px;">Unlock to view full details</a></div>' : `
+        <div style="margin-top:8px;">
+          <button style="padding:6px 12px;font-size:13px;" data-execute="${esc(opp.id)}">Simulate</button>
+          <a class="ext-link" href="${PROFILE_URL}" target="_blank" rel="noopener noreferrer">Venmo</a>
+          <a class="ext-link" href="https://cash.app" target="_blank" rel="noopener noreferrer">Cash App</a>
+        </div>`}
+    `;
+    resultsEl.prepend(div);
+  }
+
+  resultsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-execute]');
+    if (btn) execute(btn.dataset.execute);
+  });
+
+  function showSkeleton() {
+    resultsEl.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+  }
+
+  function saveResults(list) { store('lastResults', JSON.stringify(list)); }
+  function loadSavedResults() {
+    try {
+      const list = JSON.parse(load('lastResults') || '[]');
+      if (Array.isArray(list) && list.length) {
+        resultsEl.innerHTML = '';
+        list.slice().reverse().forEach((o) => renderOpp(o));
+        lastResults = list;
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+  const restored = loadSavedResults();
+
+  // Status comes from /health so it works where WebSockets aren't available (e.g. Vercel)
+  async function updateStatus() {
+    if (!navigator.onLine) { statusEl.textContent = 'Offline · showing your last scan'; return; }
+    try {
+      const res = await fetch('/health', { cache: 'no-store' });
+      const data = await res.json();
+      statusEl.textContent = premiumCode ? 'Premium active' : (data.plaid ? 'Ready · Plaid connected' : 'Ready · demo mode');
+      if (restored) statusEl.textContent += ` · last scan restored (${lastResults.length})`;
+    } catch (_) {
+      statusEl.textContent = 'Can’t reach the server · showing your last scan';
+    }
+  }
+  window.addEventListener('online', updateStatus);
+  window.addEventListener('offline', updateStatus);
+
+  // Live updates are a bonus: retry with backoff and give up quietly if the host has no WebSockets
+  let wsDelay = 2000;
+  function connect() {
+    if (!('WebSocket' in window)) return;
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let opened = false;
+    const ws = new WebSocket(`${proto}//${location.host}`);
+    ws.onopen = () => { opened = true; wsDelay = 2000; };
+    ws.onmessage = (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch (_) { return; }
+      if (msg.type === 'opportunity' && msg.data && Number(msg.data.net) >= (parseFloat(thresholdEl.value) || 0)) renderOpp(msg.data);
+    };
+    ws.onclose = () => {
+      if (!opened && wsDelay > 60000) return;
+      setTimeout(connect, wsDelay);
+      wsDelay *= 2;
+    };
+  }
+
+  async function scan() {
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'Scanning…';
+    showSkeleton();
+    lastResults = [];
+    const token = tokenEl.value.trim();
+    const min = parseFloat(thresholdEl.value) || 0;
+    addLog('Scan started');
+    try {
+      const res = await fetch('/scan', {
+        method: 'POST',
+        headers: premiumHeaders(),
+        body: JSON.stringify({ accessToken: token || undefined, premiumCode }),
+      });
+      const data = await res.json();
+      resultsEl.innerHTML = '';
+      if (res.status === 402) {
+        upgradeBanner.style.display = 'block';
+        scansEl.textContent = 'Free scans left: 0';
+        const note = document.createElement('div');
+        note.className = 'card';
+        note.innerHTML = `${esc(data.message || 'Free limit reached.')} <a href="/premium.html" style="color:#22c55e;">Unlock</a>`;
+        resultsEl.appendChild(note);
+        renderOpp({ id: 'locked', name: 'Higher Yield Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Unlock Premium to see full details.' }, true);
+        statusEl.textContent = 'Free limit reached';
+        addLog('Free limit reached');
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || 'Scan failed');
+      if (data.premium) setPremiumUI();
+      const filtered = (data.yields || []).filter((o) => o.net >= min);
+      lastResults = filtered;
+      saveResults(filtered);
+      store('lastScanAt', String(Date.now()));
+      store('oppsToday', String(Number(load('oppsToday') || 0) + filtered.length));
+      updateStats();
+      if (!data.premium) {
+        renderOpp({ id: 'locked', name: 'Premium Window', method: 'Venmo', net: 4.25, riskLevel: 'Low', description: 'Higher yield visible with Premium.' }, true);
+      }
+      if (!filtered.length) {
+        resultsEl.innerHTML = '<div class="card">No opportunities above your minimum.</div>';
+      } else {
+        filtered.slice().reverse().forEach((o) => renderOpp(o));
+      }
+      addLog(`Scan complete · ${filtered.length} opportunities`);
+      if (data.scansRemaining !== undefined) {
+        scansEl.textContent = data.premium ? 'Premium · unlimited scans' : `Free scans left: ${data.scansRemaining}`;
+        if (!data.premium && data.scansRemaining === 0) upgradeBanner.style.display = 'block';
+      }
+      statusEl.textContent = data.premium ? 'Premium · Done' : `Done · ${filtered.length} found`;
+    } catch (err) {
+      resultsEl.innerHTML = `<div class="card">${navigator.onLine ? 'Scan failed. Try again.' : 'You’re offline. Connect and try again.'}</div>`;
+      statusEl.textContent = 'Error';
+      addLog('Scan failed');
+    } finally {
+      scanBtn.disabled = false;
+      scanBtn.textContent = 'Scan';
+    }
+  }
+
+  async function checkBalance() {
+    const token = tokenEl.value.trim();
+    statusEl.textContent = 'Checking balance…';
+    try {
+      const res = await fetch('/balance' + (token ? '?accessToken=' + encodeURIComponent(token) : ''));
+      const data = await res.json();
+      statusEl.textContent = data.error ? 'Balance error' : `Available: $${(data.available || 0).toFixed(2)}`;
+      addLog('Balance checked');
+    } catch (_) { statusEl.textContent = 'Balance failed'; }
+  }
+
+  async function exportCSV() {
+    if (!lastResults.length) { alert('Scan first'); return; }
+    const rows = lastResults.map((o) => [o.name || o.id, o.method, o.net, o.riskLevel].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','));
+    const csv = ['Name,Method,Net,Risk', ...rows].join('\n');
+    const file = new File([csv], 'opportunities.csv', { type: 'text/csv' });
+    // The iOS share sheet lets you save to Files or send it; downloads don't work in a home-screen app
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Opportunities' }); addLog('Exported CSV'); } catch (_) {}
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file);
+    a.download = 'opportunities.csv';
+    a.click();
+    addLog('Exported CSV');
+  }
+
+  async function execute(id) {
+    try {
+      const res = await fetch('/execute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ opportunityId: id }) });
+      const data = await res.json();
+      alert(data.message || 'Recorded');
+      addLog('Simulated execute: ' + id);
+    } catch (_) { alert('Couldn’t reach the server'); }
+  }
+
+  scanBtn.onclick = scan;
+  document.getElementById('balance').onclick = checkBalance;
+  document.getElementById('export').onclick = exportCSV;
+
+  updateStatus();
+  checkPremium();
+  updateScans();
+  connect();
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
 </body>
 </html>
