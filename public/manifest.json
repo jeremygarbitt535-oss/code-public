@@ -1,7 +1,7 @@
 {
   "name": "Venmo Arbitrageur",
   "short_name": "Arbitrageur",
-  "description": "Scan for high-yield Venmo opportunities",
+  "description": "Venmo & Cash App offer and fee calculator",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
