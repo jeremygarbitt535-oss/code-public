@@ -295,8 +295,8 @@ app.get('/premium', async (req, res) => {
   }
   if (!STRIPE_SECRET_KEY || !COOKIE_SECRET) {
     console.error('Premium activation unavailable: STRIPE_SECRET_KEY or PREMIUM_COOKIE_SECRET not set');
-    return page('Payment received, activation pending',
-      `<p>Your payment went through, but activation isn't switched on yet. Please bookmark this page and reload it later, or contact support with your Stripe receipt.</p><p><code>${sessionId}</code></p><a class="btn sec" href="/premium?session_id=${encodeURIComponent(sessionId)}">Try again</a>`, false);
+    return page('Activation pending',
+      `<p>We can't confirm purchases automatically right now. If you just paid, your payment is safe with Stripe. Please bookmark this page and reload it later, or contact support with your Stripe receipt.</p><p><code>${sessionId}</code></p><a class="btn sec" href="/premium?session_id=${encodeURIComponent(sessionId)}">Try again</a>`, false);
   }
   try {
     const session = await retrieveCheckoutSession(sessionId);
