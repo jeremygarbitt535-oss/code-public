@@ -1,5 +1,5 @@
-const CACHE = 'arbitrageur-v2';
-const ASSETS = ['/', '/manifest.json', '/premium.html'];
+const CACHE = 'arbitrageur-v3';
+const ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -17,7 +17,6 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
-  );
+  // Network first so pages and Premium status are never stale.
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
