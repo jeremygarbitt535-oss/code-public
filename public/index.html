@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="google-site-verification" content="gtY-F88LgROA1COEhxX6GoSe3TVcM-IQ4ZtGHQ_ymWo" />
   <title>Venmo Arbitrageur | Scan for Cashback, Referrals & Fee Opportunities</title>
-  <meta name="description" content="Free scanner for Venmo and Cash App cashback, referral bonuses, and fee arbitrage. Find high-yield opportunities daily. Unlock unlimited scans with Premium.">
+  <meta name="description" content="Free calculator for Venmo and Cash App cashback, referral bonuses, and transfer fees. Work out what an offer is really worth. Unlock unlimited calculations with Premium.">
   <meta name="keywords" content="Venmo cashback, Cash App referral, Venmo fee arbitrage, Cash App cashback, Venmo bonus, payment arbitrage, yield opportunities">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://venmo-arbitrageur-jeremygarbitt535-4478.vercel.app/">
@@ -110,14 +110,14 @@
     <div class="header-row">
       <div>
         <h1>Venmo Arbitrageur <span id="premiumBadge" class="premium-badge" style="display:none;">Premium</span></h1>
-        <p class="sub">Stop missing free cashback and referral bonuses on Venmo & Cash App. Scan daily — free users get 3 scans, Premium unlocks unlimited + alerts.</p>
+        <p class="sub">Work out what Venmo &amp; Cash App cashback, referral bonuses and transfer-fee choices are really worth. Free: 3 calculations a day. Premium: unlimited, CSV export and the savings guide.</p>
       </div>
       <a class="avatar" href="https://venmo.com/u/Auroraopportunities" target="_blank" rel="noopener noreferrer" title="My Venmo Profile">AO</a>
     </div>
 
     <div class="upgrade-banner">
-      <strong>Get tomorrow’s free opportunity alert</strong>
-      <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Drop your email and we’ll send the top yield windows. No spam.</p>
+      <strong>Get updates by email</strong>
+      <p style="margin:6px 0 0;font-size:14px;color:#94a3b8;">Leave your email to hear about new guides and features. No spam.</p>
       <form class="email-form" id="emailForm">
         <input type="email" id="emailInput" placeholder="your@email.com" required>
         <button type="submit">Send me alerts</button>
@@ -134,18 +134,41 @@
       </div>
     </div>
 
-    <!-- Main app content / JS would go here in full version -->
+    <div class="card" id="calc">
+      <div class="row" style="justify-content:space-between;">
+        <strong>Offer calculator</strong>
+        <span id="scans"></span>
+      </div>
+      <p class="meta" style="margin:6px 0 12px;">This app does not pull live offers from Venmo or Cash App. Enter an offer you see in your app, or press "Show examples" for illustrative numbers.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <label class="meta">Offer name<input id="fName" placeholder="e.g. Coffee cashback"></label>
+        <label class="meta">Cashback ($)<input id="fCash" type="number" step="0.01" placeholder="0.00"></label>
+        <label class="meta">Referral / bonus ($)<input id="fRef" type="number" step="0.01" placeholder="0.00"></label>
+        <label class="meta">Fees you'd pay ($)<input id="fFees" type="number" step="0.01" placeholder="0.00"></label>
+        <label class="meta">Risk
+          <select id="fRisk" style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:10px 12px;border-radius:10px;font-size:15px;width:100%;max-width:280px;">
+            <option>Low</option><option>Medium</option><option>High</option>
+          </select></label>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <button id="calcBtn">Calculate</button>
+        <button id="exampleBtn" class="secondary">Show examples</button>
+        <button id="exportBtn" class="secondary" style="display:none;">Export CSV</button>
+        <a id="unlockBtn" class="btn premium" href="https://buy.stripe.com/4gM4gs9F55BA4GK3D59bO04" rel="noopener">Unlock Premium ($19)</a>
+      </div>
+      <div id="status" style="margin-top:8px;"></div>
+      <div id="results"></div>
+    </div>
 
     <div class="seo-content">
       <h2>How Venmo Arbitrageur Works</h2>
-      <p>Venmo Arbitrageur helps you discover cashback promotions, referral bonuses, and fee-avoidance opportunities on Venmo and Cash App. Run a free daily scan to surface risk-adjusted yield windows, or unlock Premium for unlimited scans, alerts, and higher-yield results.</p>
+      <p>Venmo Arbitrageur is a calculator and guide. Enter a cashback offer, referral bonus or transfer fee you see in your Venmo or Cash App app and it shows the net value after fees and a risk adjustment.</p>
       <ul>
-        <li>Scan for active cashback and referral offers</li>
-        <li>Identify fee arbitrage windows (standard vs instant transfers)</li>
-        <li>Get timing-based yield opportunities</li>
-        <li>Free tier: 3 scans per day · Premium: unlimited + alerts + export</li>
+        <li>Compare standard (free) vs instant transfers (Venmo instant: 1.75%, min $0.25, max $25)</li>
+        <li>Net out referral bonuses and cashback against any fees</li>
+        <li>Free: 3 calculations per day · Premium ($19 one-time): unlimited calculations, CSV export and the savings guide</li>
       </ul>
-      <p>This tool is a scanner and calculator. Always verify offers directly in the Venmo or Cash App apps before acting. Ready to stop missing money? <a href="/premium.html" style="color:#60a5fa;">Unlock Premium</a>.</p>
+      <p>It does not connect to Venmo or Cash App, find offers for you, move money, or guarantee earnings. Always verify offers directly in the app. <a href="https://buy.stripe.com/4gM4gs9F55BA4GK3D59bO04" style="color:#60a5fa;">Unlock Premium</a> · <a href="/premium.html" style="color:#60a5fa;">What's included</a></p>
     </div>
 
 <!--Start of Tawk.to Script-->
@@ -163,6 +186,76 @@ s0.parentNode.insertBefore(s1,s0);
 <!--End of Tawk.to Script-->
 
 <script>
+const PREMIUM_URL = 'https://buy.stripe.com/4gM4gs9F55BA4GK3D59bO04';
+let lastResults = [];
+let isPremium = false;
+const $ = (id) => document.getElementById(id);
+function fmt(n){ return (n < 0 ? '-$' : '$') + Math.abs(Number(n)).toFixed(2); }
+async function refreshStatus(){
+  try {
+    const r = await fetch('/scans-remaining', { credentials: 'same-origin' });
+    const d = await r.json();
+    isPremium = !!d.premium;
+    $('premiumBadge').style.display = isPremium ? 'inline' : 'none';
+    $('unlockBtn').style.display = isPremium ? 'none' : '';
+    $('exportBtn').style.display = isPremium ? '' : 'none';
+    $('scans').textContent = isPremium ? 'Premium: unlimited' : (d.remaining + ' of ' + d.limit + ' free left today');
+  } catch {}
+}
+function render(data){
+  const box = $('results');
+  box.innerHTML = '';
+  const note = document.createElement('p');
+  note.className = 'meta';
+  note.textContent = data.note || '';
+  box.appendChild(note);
+  (data.results || []).forEach(o => {
+    const d = document.createElement('div');
+    d.className = 'opp' + (o.net >= 1 ? ' high' : '');
+    const title = document.createElement('div');
+    title.innerHTML = '<strong></strong> <span class="yield"></span>';
+    title.querySelector('strong').textContent = o.name + (o.illustrative ? ' (example)' : '');
+    title.querySelector('.yield').textContent = 'Net ' + fmt(o.net);
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = 'Gross ' + fmt(o.gross) + ' · risk penalty ' + fmt(o.penalty) + ' · ' + (o.profitable ? 'worth considering' : 'probably not worth it') + (o.description ? ' · ' + o.description : '');
+    d.appendChild(title); d.appendChild(meta); box.appendChild(d);
+  });
+}
+async function runScan(opportunities){
+  $('status').textContent = 'Calculating...';
+  try {
+    const r = await fetch('/scan', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(opportunities ? { opportunities } : {}) });
+    const d = await r.json();
+    if (r.status === 402) {
+      $('status').innerHTML = '';
+      const a = document.createElement('a'); a.href = d.premiumUrl || PREMIUM_URL; a.style.color = '#fbbf24';
+      a.textContent = d.message + ' Unlock Premium ($19).';
+      $('status').appendChild(a);
+    } else if (!r.ok) {
+      $('status').textContent = d.error || 'Something went wrong';
+    } else {
+      $('status').textContent = '';
+      lastResults = d.results || [];
+      render(d);
+    }
+  } catch { $('status').textContent = 'Network error, try again'; }
+  refreshStatus();
+}
+$('calcBtn').addEventListener('click', () => {
+  const o = { name: $('fName').value || 'Your offer', cashback: Number($('fCash').value) || 0, referralBonus: Number($('fRef').value) || 0, fees: Number($('fFees').value) || 0, riskLevel: $('fRisk').value };
+  runScan([o]);
+});
+$('exampleBtn').addEventListener('click', () => runScan(null));
+$('exportBtn').addEventListener('click', async () => {
+  const r = await fetch('/export.csv', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ results: lastResults }) });
+  if (!r.ok) { $('status').textContent = 'Export is a Premium feature.'; return; }
+  const blob = await r.blob();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'venmo-arbitrageur-results.csv'; a.click();
+});
+refreshStatus();
+</script>
+<script>
 document.getElementById('emailForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const email = document.getElementById('emailInput').value;
@@ -175,7 +268,7 @@ document.getElementById('emailForm').addEventListener('submit', async (e) => {
       body: JSON.stringify({ email })
     });
     const data = await res.json();
-    status.textContent = data.ok ? 'You\u2019re in! Check your inbox soon.' : (data.error || 'Something went wrong');
+    status.textContent = data.ok ? 'Thanks, you\u2019re on the list.' : (data.error || 'Something went wrong');
     if (data.ok) document.getElementById('emailInput').value = '';
   } catch {
     status.textContent = 'Network error — try again';

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Premium — Venmo Arbitrageur</title>
-  <meta name="description" content="Unlock unlimited scans, higher-yield windows, and daily alerts. Stop missing free cashback and referrals.">
+  <meta name="description" content="Venmo Arbitrageur Premium: unlimited calculations, CSV export and the Venmo &amp; Cash App savings guide for a one-time $19.">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
   <style>
@@ -81,86 +81,34 @@
 <body>
   <div class="wrap">
     <h1>Unlock Premium</h1>
-    <p class="lead">Stop missing free money. Unlimited scans, higher-yield windows, and daily alerts so you never leave cashback or referrals on the table.</p>
-    <p style="text-align:center;color:#86efac;font-size:14px;margin:-12px 0 20px;">Join users who are capturing opportunities free users never see.</p>
+    <p class="lead">One payment of $19. Unlimited calculations, CSV export and the Venmo &amp; Cash App savings guide.</p>
 
-    <div class="deal">
-      <span class="badge">LIMITED TIME</span>
-      <h2>$199 Lifetime Deal</h2>
-      <div class="price">$199</div>
-      <div class="was">$499</div>
-      <p style="margin:8px 0 0;font-size:14px;color:#cbd5e1;">All future features + priority support. One payment, forever access. Best for serious users.</p>
-      <div class="countdown" id="countdown">
-        <div><div class="num" id="h">00</div><div class="label">Hrs</div></div>
-        <div><div class="num" id="m">00</div><div class="label">Min</div></div>
-        <div><div class="num" id="s">00</div><div class="label">Sec</div></div>
-      </div>
-      <a class="btn" href="https://buy.stripe.com/00w28kcRhe86c9c2z19bO02" target="_blank" rel="noopener">Claim $199 Lifetime</a>
-    </div>
-
-    <div class="plans">
-      <div class="plan featured">
-        <h2>Monthly</h2>
-        <div class="price">$12<span style="font-size:16px;color:#94a3b8;">/mo</span></div>
-        <p>Cancel anytime. Unlimited scans + alerts.</p>
-        <a class="btn-plan" href="https://buy.stripe.com/dRm5kw8B12po7SW6Ph9bO03" target="_blank" rel="noopener">Start Monthly</a>
-      </div>
-      <div class="plan">
-        <h2>One-time</h2>
-        <div class="price">$19</div>
-        <p>Pay once, unlock forever</p>
-        <a class="btn-plan secondary" href="https://buy.stripe.com/4gM6oA3gH9RQgps7Tl9bO00" target="_blank" rel="noopener">Get $19</a>
-      </div>
-    </div>
-
-    <div class="plan" style="margin-bottom:20px;">
-      <h2>Lifetime</h2>
-      <div class="price">$49</div>
-      <p>Best one-time value — all future features</p>
-      <a class="btn-plan secondary" href="https://buy.stripe.com/cNiaEQ2cD3ts2yCc9B9bO01" target="_blank" rel="noopener">Get $49 Lifetime</a>
+    <div class="plan featured" style="margin-bottom:20px;">
+      <h2>Premium, one-time</h2>
+      <div class="price">$19</div>
+      <p>Pay once. Unlocks in the browser you pay from (you'll get a private link to unlock other devices).</p>
+      <a class="btn-plan" href="https://buy.stripe.com/4gM4gs9F55BA4GK3D59bO04" rel="noopener">Unlock Premium for $19</a>
     </div>
 
     <div class="features">
-      <h3>What Premium gets you</h3>
+      <h3>What Premium includes</h3>
       <ul>
-        <li>Unlimited daily scans (no free limit of 3)</li>
-        <li>See higher-yield opportunities that free users miss</li>
-        <li>Daily alerts via Telegram, Discord, or Slack</li>
-        <li>Export results to CSV</li>
-        <li>Priority on new features</li>
-        <li>$199 deal includes priority support</li>
+        <li>Unlimited calculations (free plan: 3 per day)</li>
+        <li>Export your results to CSV</li>
+        <li>The savings guide: avoiding instant-transfer fees, how referral and cashback programs work, and red flags to avoid</li>
       </ul>
     </div>
 
-    <a class="back" href="/">← Back to app</a>
-  </div>
+    <div class="features">
+      <h3>What it doesn't do</h3>
+      <ul>
+        <li>It doesn't connect to Venmo or Cash App or find live offers for you. You enter offers you see in your app.</li>
+        <li>It never moves money and doesn't guarantee any earnings.</li>
+      </ul>
+      <p style="font-size:13px;color:#94a3b8;margin:10px 0 0;">Payments are processed by Stripe. Questions or problems with a purchase: use the chat on the home page and include your Stripe receipt.</p>
+    </div>
 
-  <script>
-    function getEnd() {
-      const key = 'dealEnd';
-      let end = localStorage.getItem(key);
-      if (!end || Number(end) < Date.now()) {
-        end = String(Date.now() + 24 * 60 * 60 * 1000);
-        localStorage.setItem(key, end);
-      }
-      return Number(end);
-    }
-    const end = getEnd();
-    function tick() {
-      let diff = Math.max(0, end - Date.now());
-      const h = Math.floor(diff / 3600000);
-      diff %= 3600000;
-      const m = Math.floor(diff / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      document.getElementById('h').textContent = String(h).padStart(2, '0');
-      document.getElementById('m').textContent = String(m).padStart(2, '0');
-      document.getElementById('s').textContent = String(s).padStart(2, '0');
-      if (diff <= 0 && end - Date.now() <= 0) {
-        localStorage.removeItem('dealEnd');
-      }
-    }
-    tick();
-    setInterval(tick, 1000);
-  </script>
+    <a class="back" href="/">&larr; Back to the calculator</a>
+  </div>
 </body>
 </html>
